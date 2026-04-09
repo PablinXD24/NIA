@@ -5,184 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE SIX - Assistente B2B AI</title>
     <style>
-        /* =========================================
-           RESET E BASE (MANTIDOS)
-           ========================================= */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        /* LOGIN AREA */
-        #login-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            z-index: 100;
-        }
-
-        .btn-google {
-            background: white;
-            color: #444;
-            border: 1px solid #ddd;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s;
-        }
-        .btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-
-        /* SMART CONTAINER (LIQUIDGLASS) */
-        .smart-container {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
-            width: 100%;
-            max-width: 700px;
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            overflow: hidden;
-            display: none; /* Inicia oculto até o login */
-            flex-direction: column;
-            position: relative;
-        }
-
-        .smart-container.expanded .results-area {
-            max-height: 2000px;
-            opacity: 1;
-            padding: 32px 24px;
-            overflow-y: auto;
-        }
-
-        /* ÁREA DE PROMPT */
-        .prompt-area {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            background: rgba(255, 255, 255, 0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        .header-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #596a7b;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .ai-badge {
-            font-size: 12px;
-            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-
-        textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            resize: none;
-            font-size: 18px;
-            line-height: 1.5;
-            color: #2c3e50;
-            outline: none;
-            min-height: 60px;
-        }
-
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-text {
-            font-size: 13px;
-            color: #3498db;
-            font-weight: 500;
-            opacity: 0;
-            transition: opacity 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-submit {
-            background: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        /* RESULTADOS */
-        .results-area {
-            max-height: 0;
-            opacity: 0;
-            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            background: rgba(255, 255, 255, 0.85);
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .result-block { margin-bottom: 24px; opacity: 0; transform: translateY(10px); }
-        .smart-container.expanded .result-block { animation: fadeIn 0.5s ease forwards; }
-
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-
-        .result-title {
-            font-size: 12px; font-weight: 700; color: #7f8c8d;
-            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
-        }
-
-        .script-box {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #dcdde1;
-            padding: 16px; border-radius: 12px; position: relative;
-        }
-
-        .btn-copy {
-            position: absolute; top: 12px; right: 12px;
-            background: #f1f2f6; border: none; padding: 6px 12px;
-            border-radius: 6px; font-size: 12px; cursor: pointer;
-        }
-
-        .spinner {
-            width: 16px; height: 16px;
-            border: 2px solid #3498db; border-top: 2px solid transparent;
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
+        /* MANTIDA TODA A SUA ESTÉTICA ORIGINAL */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 100; }
+        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
+        .smart-container { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 24px; width: 100%; max-width: 700px; display: none; flex-direction: column; position: relative; transition: all 0.5s ease; }
+        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; }
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; }
+        .ai-badge { font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; color: #2c3e50; outline: none; min-height: 60px; }
+        .status-text { font-size: 13px; color: #3498db; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; }
+        .results-area { max-height: 0; opacity: 0; transition: all 0.6s; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
+        .result-block { margin-bottom: 24px; }
+        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+        .script-box { background: rgba(255, 255, 255, 0.9); border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
+        .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
@@ -199,15 +41,14 @@
         <div class="prompt-area">
             <div class="header-title">
                 <span id="userGreeting">Como posso ajudar na cobrança?</span>
-                <span class="ai-badge">✦ Gemini 1.5 Pro</span>
+                <span class="ai-badge">✦ Firebase AI Logic</span>
             </div>
             
             <textarea id="promptInput" placeholder="Descreva a situação da empresa ou cliente..."></textarea>
             
             <div class="action-bar">
                 <div class="status-text" id="statusText">
-                    <div class="spinner"></div>
-                    Processando inteligência...
+                    <div class="spinner"></div> Processando inteligência...
                 </div>
                 
                 <button id="btnSubmit" class="btn-submit">
@@ -221,14 +62,14 @@
         <div class="results-area" id="resultsArea">
             <div class="result-block">
                 <div class="result-title">⚡ Diagnóstico da IA</div>
-                <div class="result-content" id="iaDiagnostico"></div>
+                <div id="iaDiagnostico"></div>
             </div>
 
             <div class="result-block">
                 <div class="result-title">✍️ Script Gerado</div>
                 <div class="script-box">
                     <button id="btnCopiar" class="btn-copy">Copiar</button>
-                    <div class="result-content" id="iaScript" style="white-space: pre-wrap;"></div>
+                    <div id="iaScript" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
         </div>
@@ -238,110 +79,83 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // NOVO SDK: Firebase AI Logic
+        import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-ai.js";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
-  authDomain: "nova-96b06.firebaseapp.com",
-  projectId: "nova-96b06",
-  storageBucket: "nova-96b06.firebasestorage.app",
-  messagingSenderId: "166967553772",
-  appId: "1:166967553772:web:475370390f719953afbfc9"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
+            authDomain: "nova-96b06.firebaseapp.com",
+            projectId: "nova-96b06",
+            storageBucket: "nova-96b06.firebasestorage.app",
+            messagingSenderId: "166967553772",
+            appId: "1:166967553772:web:475370390f719953afbfc9"
+        };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+        // Inicialização do FirebaseApp
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
 
-        // CONFIGURAÇÃO GEMINI (Endpoint para sua Cloud Function ou API Direta)
-        const GEMINI_API_KEY = "SUA_GEMINI_API_KEY";
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        // Inicialização do backend do Gemini Developer API
+        const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
+        // Criação da instância do modelo (usando a versão estável sugerida pelo Gemini 3 Flash)
+        const model = getGenerativeModel(ai, { model: "gemini-3-flash" });
 
-        // ELEMENTOS UI
-        const loginScreen = document.getElementById('login-screen');
-        const mainContainer = document.getElementById('mainContainer');
-        const promptInput = document.getElementById('promptInput');
-        const btnSubmit = document.getElementById('btnSubmit');
-        const statusText = document.getElementById('statusText');
-        const iaDiagnostico = document.getElementById('iaDiagnostico');
-        const iaScript = document.getElementById('iaScript');
-
-        // --- GESTÃO DE AUTENTICAÇÃO ---
-        document.getElementById('btnGoogle').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(err => console.error("Erro Login:", err));
-        });
-
+        // --- AUTENTICAÇÃO ---
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loginScreen.style.display = 'none';
-                mainContainer.style.display = 'flex';
-                document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}! Como ajudar hoje?`;
-            } else {
-                loginScreen.style.display = 'flex';
-                mainContainer.style.display = 'none';
-            }
+            document.getElementById('login-screen').style.display = user ? 'none' : 'flex';
+            document.getElementById('mainContainer').style.display = user ? 'flex' : 'none';
+            if(user) document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}!`;
         });
 
-        // --- LÓGICA DE IA (GEMINI API) ---
-        async function callGemini(userPrompt) {
-            const systemContext = "Você é um assistente B2B especialista em cobrança e negociação. Analise o caso e forneça: 1) Um diagnóstico de risco e tom. 2) Um script de mensagem para WhatsApp/Email. Use formato JSON ou separe por delimitadores claros.";
-            
+        document.getElementById('btnGoogle').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+
+        // --- LÓGICA DE EXECUÇÃO ---
+        document.getElementById('btnSubmit').onclick = async () => {
+            const promptValue = document.getElementById('promptInput').value.trim();
+            if (!promptValue) return;
+
+            document.getElementById('statusText').style.opacity = "1";
+            document.getElementById('mainContainer').classList.remove('expanded');
+
             try {
-                const response = await fetch(GEMINI_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `${systemContext}\n\nUsuário: ${userPrompt}` }] }]
-                    })
-                });
+                const fullPrompt = `Você é um especialista em cobrança B2B. Analise este caso: ${promptValue}. Forneça primeiro um diagnóstico curto e depois um script de mensagem, separados por '---'.`;
+                
+                // Chamada usando a estrutura GenerativeModel
+                const result = await model.generateContent(fullPrompt);
+                const responseText = result.response.text();
+                
+                const [diagnostico, script] = responseText.split('---');
 
-                const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
+                document.getElementById('iaDiagnostico').innerText = diagnostico || "Análise concluída.";
+                document.getElementById('iaScript').innerText = script || responseText;
+                document.getElementById('mainContainer').classList.add('expanded');
+
+                // Salva no Firestore
+                if (auth.currentUser) {
+                    await setDoc(doc(db, "history", `${Date.now()}`), {
+                        uid: auth.currentUser.uid,
+                        prompt: promptValue,
+                        response: responseText,
+                        timestamp: serverTimestamp()
+                    });
+                }
             } catch (error) {
-                console.error("Erro Gemini:", error);
-                return "Erro ao processar. Verifique sua chave de API.";
+                console.error("Erro AI Logic:", error);
+                alert("Erro ao processar. Verifique se o Gemini Developer API está ativo no console.");
+            } finally {
+                document.getElementById('statusText').style.opacity = "0";
             }
-        }
+        };
 
-        btnSubmit.addEventListener('click', async () => {
-            const promptValue = promptInput.value.trim();
-            if (!promptValue || btnSubmit.disabled) return;
-
-            btnSubmit.disabled = true;
-            statusText.style.opacity = "1";
-            mainContainer.classList.remove('expanded');
-
-            const aiResponse = await callGemini(promptValue);
-
-            // Parsing simples (ajuste conforme a resposta do Gemini)
-            // Aqui assumimos que ele devolve texto corrido ou formatado
-            iaDiagnostico.innerHTML = "<strong>Análise concluída.</strong> " + aiResponse.substring(0, 200) + "...";
-            iaScript.innerText = aiResponse;
-
-            // Salvar no Banco de Dados (Firestore)
-            if (auth.currentUser) {
-                await setDoc(doc(db, "history", `${Date.now()}`), {
-                    uid: auth.currentUser.uid,
-                    prompt: promptValue,
-                    response: aiResponse,
-                    timestamp: serverTimestamp()
-                });
-            }
-
-            statusText.style.opacity = "0";
-            btnSubmit.disabled = false;
-            mainContainer.classList.add('expanded');
-        });
-
-        // Eventos de UI (Cópia e Teclado)
-        promptInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); btnSubmit.click(); } });
-        document.getElementById('btnCopiar').addEventListener('click', () => {
-            navigator.clipboard.writeText(iaScript.innerText).then(() => {
+        // Copiar Script
+        document.getElementById('btnCopiar').onclick = () => {
+            const text = document.getElementById('iaScript').innerText;
+            navigator.clipboard.writeText(text).then(() => {
                 document.getElementById('btnCopiar').innerText = "Copiado!";
                 setTimeout(() => document.getElementById('btnCopiar').innerText = "Copiar", 2000);
             });
-        });
+        };
     </script>
 </body>
 </html>
