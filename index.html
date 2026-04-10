@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIA</title>
+    <title>NIA - Sorteador de Situação</title>
     <style>
         /* ESTÉTICA LIQUID GLASS */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
@@ -23,43 +23,46 @@
             overflow: hidden; 
         }
 
-        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); }
-        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); text-align: center; }
+        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
         
-        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 60px; }
+        .instruction { font-size: 16px; color: #2c3e50; margin-bottom: 10px; }
         
-        .action-bar { display: flex; justify-content: flex-end; align-items: center; }
+        .action-bar { display: flex; justify-content: center; align-items: center; padding-bottom: 10px; }
         
-        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
+        .btn-submit { 
+            background: #2c3e50; 
+            color: white; 
+            border: none; 
+            border-radius: 30px; 
+            padding: 12px 30px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-submit:hover { background: #34495e; transform: translateY(-2px); }
 
         .results-area { max-height: 0; opacity: 0; transition: all 0.5s ease; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
         .smart-container.expanded .results-area { max-height: 1000px; opacity: 1; padding: 32px 24px; }
 
-        .result-block { margin-bottom: 24px; padding: 15px; border-radius: 12px; background: white; border: 1px solid rgba(0,0,0,0.05); }
-        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .data-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 15px; color: #2c3e50; }
-        .data-label { font-weight: 600; color: #596a7b; }
-        
-        .not-found { color: #e74c3c; font-weight: 600; text-align: center; padding: 20px; }
+        .result-block { margin-bottom: 24px; padding: 20px; border-radius: 16px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .result-title { font-size: 13px; font-weight: 700; color: #3498db; margin-bottom: 15px; text-transform: uppercase; }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f3f5; }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: #7f8c8d; font-weight: 500; }
+        .data-value { color: #2c3e50; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="smart-container" id="mainContainer">
         <div class="prompt-area">
-            <div class="header-title">
-                <span>Consulta de Base de Dados Local</span>
-                <span style="font-weight: 700; color: #2c3e50;">THE SIX</span>
-            </div>
-            
-            <textarea id="promptInput" placeholder="Digite o nome do cliente para buscar..."></textarea>
-            
+            <div class="header-title">Sistema de Análise</div>
+            <p class="instruction">Clique abaixo para sortear um cliente e verificar sua situação financeira.</p>
             <div class="action-bar">
-                <button id="btnSubmit" class="btn-submit">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </button>
+                <button class="btn-submit" id="btnSortear">SORTEAR CLIENTE</button>
             </div>
         </div>
 
@@ -67,86 +70,73 @@
             </div>
     </div>
 
-    <script type="module">
-        const mainContainer = document.getElementById('mainContainer');
-        const promptInput = document.getElementById('promptInput');
-        const btnSubmit = document.getElementById('btnSubmit');
+    <script>
+        // Dados do arquivo clientes.json
+        const clients = [
+            { "nome": "João Silva", "idade": 35, "cpf": "123.456.789-00", "renda": 4500.75, "estado_civil": "Casado" },
+            { "nome": "Maria Oliveira", "idade": 28, "cpf": "987.654.321-00", "renda": 3200.50, "estado_civil": "Solteira" },
+            { "nome": "Carlos Souza", "idade": 42, "cpf": "111.222.333-44", "renda": 7800.00, "estado_civil": "Divorciado" },
+            { "nome": "Ana Santos", "idade": 30, "cpf": "555.666.777-88", "renda": 5100.20, "estado_civil": "Casada" },
+            { "nome": "Pedro Lima", "idade": 25, "cpf": "999.888.777-66", "renda": 2700.00, "estado_civil": "Solteiro" },
+            { "nome": "Fernanda Costa", "idade": 33, "cpf": "222.333.444-55", "renda": 6200.10, "estado_civil": "Casada" }
+            // ... outros clientes do repositório
+        ];
+
+        // Dados do arquivo situacao.json
+        const situacoes = [
+            { "nome": "João Silva", "status_divida": "Negativado", "valor_pendente": 1500.75, "limite_disponivel": 200.00, "score_credito": 350 },
+            { "nome": "Maria Oliveira", "status_divida": "Atraso", "valor_pendente": 450.20, "limite_disponivel": 1500.00, "score_credito": 580 },
+            { "nome": "Carlos Souza", "status_divida": "Negativado", "valor_pendente": 8900.00, "limite_disponivel": 0.00, "score_credito": 120 },
+            { "nome": "Ana Santos", "status_divida": "Acordo", "valor_pendente": 1200.50, "limite_disponivel": 500.00, "score_credito": 450 },
+            { "nome": "Pedro Lima", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 50.00, "score_credito": 210 },
+            { "nome": "Fernanda Costa", "status_divida": "Atraso", "valor_pendente": 210.15, "limite_disponivel": 8000.00, "score_credito": 720 }
+            // ... outras situações do repositório
+        ];
+
+        const btnSortear = document.getElementById('btnSortear');
+        const container = document.getElementById('mainContainer');
         const resultsArea = document.getElementById('resultsArea');
 
-        // Função Principal de Busca
-        async function buscarDados() {
-            const termoBusca = promptInput.value.trim().toLowerCase();
-            if (!termoBusca) return;
+        function realizarSorteio() {
+            // Sorteia um índice aleatório com base na lista de clientes
+            const indiceSorteado = Math.floor(Math.random() * clients.length);
+            const cliente = clients[indiceSorteado];
+            
+            // Busca a situação financeira correspondente pelo nome
+            const status = situacoes.find(s => s.nome === cliente.nome);
 
-            try {
-                // Puxando dados dos arquivos JSON no repositório
-                const [resClientes, resSituacao] = await Promise.all([
-                    fetch('./clientes.json'),
-                    fetch('./situacao.json')
-                ]);
-
-                if (!resClientes.ok || !resSituacao.ok) throw new Error("Erro ao carregar arquivos JSON");
-
-                const clientes = await resClientes.json();
-                const situacoes = await resSituacao.json();
-
-                // Filtrando por nome
-                const cliente = clientes.find(c => termoBusca.includes(c.nome.toLowerCase()) || c.nome.toLowerCase().includes(termoBusca));
-                const status = situacoes.find(s => termoBusca.includes(s.nome.toLowerCase()) || s.nome.toLowerCase().includes(termoBusca));
-
-                exibirResultados(cliente, status);
-                mainContainer.classList.add('expanded');
-
-            } catch (error) {
-                console.error(error);
-                resultsArea.innerHTML = `<div class="not-found">Erro: Certifique-se que os arquivos .json estão no mesmo repositório.</div>`;
-                mainContainer.classList.add('expanded');
-            }
+            exibirResultados(cliente, status);
         }
 
-        // Função para construir o HTML dos resultados
         function exibirResultados(cliente, status) {
-            if (!cliente && !status) {
-                resultsArea.innerHTML = `<div class="not-found">Nenhum dado encontrado para este termo.</div>`;
-                return;
-            }
-
-            let html = "";
-
-            if (cliente) {
-                html += `
+            container.classList.add('expanded');
+            
+            let html = `
                 <div class="result-block">
-                    <div class="result-title">👤 Informações Pessoais</div>
-                    <div class="data-row"><span class="data-label">Nome:</span> <span>${cliente.nome}</span></div>
-                    <div class="data-row"><span class="data-label">CPF:</span> <span>${cliente.cpf}</span></div>
-                    <div class="data-row"><span class="data-label">Renda:</span> <span>R$ ${cliente.renda}</span></div>
-                    <div class="data-row"><span class="data-label">Estado Civil:</span> <span>${cliente.estado_civil}</span></div>
+                    <div class="result-title">👤 Dados do Cliente</div>
+                    <div class="data-row"><span class="data-label">Nome:</span> <span class="data-value">${cliente.nome}</span></div>
+                    <div class="data-row"><span class="data-label">Idade:</span> <span class="data-value">${cliente.idade} anos</span></div>
+                    <div class="data-row"><span class="data-label">CPF:</span> <span class="data-value">${cliente.cpf}</span></div>
+                    <div class="data-row"><span class="data-label">Renda:</span> <span class="data-value">R$ ${cliente.renda.toLocaleString('pt-BR')}</span></div>
                 </div>`;
-            }
 
             if (status) {
+                const corStatus = status.status_divida === 'Negativado' ? '#e74c3c' : (status.status_divida === 'Atraso' ? '#f39c12' : '#27ae60');
+                
                 html += `
                 <div class="result-block">
                     <div class="result-title">📊 Situação Financeira</div>
-                    <div class="data-row"><span class="data-label">Status:</span> <span>${status.status_divida}</span></div>
-                    <div class="data-row"><span class="data-label">Dívida Pendente:</span> <span style="color: #e74c3c">R$ ${status.valor_pendente}</span></div>
-                    <div class="data-row"><span class="data-label">Score:</span> <span>${status.score_credito}</span></div>
-                    <div class="data-row"><span class="data-label">Limite Disponível:</span> <span>R$ ${status.limite_disponivel}</span></div>
+                    <div class="data-row"><span class="data-label">Status:</span> <span class="data-value" style="color: ${corStatus}">${status.status_divida}</span></div>
+                    <div class="data-row"><span class="data-label">Dívida Pendente:</span> <span class="data-value" style="color: #e74c3c">R$ ${status.valor_pendente.toLocaleString('pt-BR')}</span></div>
+                    <div class="data-row"><span class="data-label">Score:</span> <span class="data-value">${status.score_credito}</span></div>
+                    <div class="data-row"><span class="data-label">Limite Disponível:</span> <span class="data-value">R$ ${status.limite_disponivel.toLocaleString('pt-BR')}</span></div>
                 </div>`;
             }
 
             resultsArea.innerHTML = html;
         }
 
-        // Eventos
-        btnSubmit.addEventListener('click', buscarDados);
-        
-        promptInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                buscarDados();
-            }
-        });
+        btnSortear.addEventListener('click', realizarSorteio);
     </script>
 </body>
 </html>
