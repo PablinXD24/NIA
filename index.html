@@ -83,12 +83,9 @@
     </div>
 
     <script type="module">
-        // Importações ATUALIZADAS para remover o erro 404
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        
-        // Esta é a única forma de importar o Gemini no Firebase v11 para Web:
         import { getVertexAI, getGenerativeModel } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-vertexai.js";
 
         const firebaseConfig = {
@@ -105,9 +102,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         
-        // Inicialização correta
+        // CORREÇÃO: Usando o modelo atualizado gemini-1.5-flash-002
         const vertexAI = getVertexAI(app);
-        const model = getGenerativeModel(vertexAI, { model: "gemini-1.5-flash" });
+        const model = getGenerativeModel(vertexAI, { model: "gemini-1.5-flash-002" });
 
         const loginScreen = document.getElementById('login-screen');
         const mainContainer = document.getElementById('mainContainer');
@@ -124,7 +121,6 @@
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 console.error("Erro no login:", error);
-                alert("Falha ao entrar com Google: " + error.message);
             }
         });
 
@@ -151,14 +147,19 @@
             try {
                 const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
                 
-                // Chamada correta para o modelo
+                // Chamada do modelo
                 const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
                 const response = await result.response;
                 const responseText = response.text();
 
-                const [diag, script] = responseText.split('---');
-                iaDiagnostico.innerText = diag ? diag.trim() : "Análise concluída.";
-                iaScript.innerText = script ? script.trim() : responseText.trim();
+                if (responseText.includes('---')) {
+                    const [diag, script] = responseText.split('---');
+                    iaDiagnostico.innerText = diag.trim();
+                    iaScript.innerText = script.trim();
+                } else {
+                    iaDiagnostico.innerText = "Análise concluída.";
+                    iaScript.innerText = responseText.trim();
+                }
 
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
@@ -172,7 +173,7 @@
                 mainContainer.classList.add('expanded');
             } catch (error) {
                 console.error("Erro na IA:", error);
-                alert("Erro ao gerar resposta. Verifique se o Vertex AI está ativo no console.");
+                alert("Erro ao gerar resposta. Verifique se o Vertex AI está habilitado no Console do Firebase (Caminho: Build > Vertex AI).");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
