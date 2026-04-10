@@ -88,7 +88,7 @@
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // Configuração do seu Firebase Original (Plano Spark Gratuito)
+        // Configuração do Firebase mantida
         const firebaseConfig = {
             apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
             authDomain: "nova-96b06.firebaseapp.com",
@@ -102,10 +102,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // NOVA CHAVE QUE FUNCIONOU NO CURL
+        // Chave API Gemini (recomendado manter pela gratuidade)
         const API_KEY = "AIzaSyAcnxs8sCRWGhYNa7blpj594YPunw9LP4s";
         const genAI = new GoogleGenerativeAI(API_KEY);
-        // Usando o modelo flash estável
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const loginScreen = document.getElementById('login-screen');
@@ -116,7 +115,7 @@
         const iaDiagnostico = document.getElementById('iaDiagnostico');
         const iaScript = document.getElementById('iaScript');
 
-        // Login
+        // Lógica de Login Original
         document.getElementById('btnGoogle').addEventListener('click', async () => {
             try {
                 await signInWithPopup(auth, provider);
@@ -133,7 +132,7 @@
             }
         });
 
-        // IA
+        // Lógica da IA (Mantida e Estável)
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
