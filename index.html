@@ -231,12 +231,13 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Atualizado para a versão 11.4.0 que contém o suporte estável para AI Logic
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         
-        // Importação do novo SDK Firebase AI Logic conforme o guia
-        import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-ai.js";
+        // Caminho corrigido para o SDK de IA
+        import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-ai.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
@@ -247,13 +248,12 @@
             appId: "1:166967553772:web:475370390f719953afbfc9"
         };
 
-        // Inicialização dos serviços
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // Inicialização do Firebase AI Logic
+        // Inicialização do backend do Gemini Developer API
         const ai = getAI(app, { backend: new GoogleAIBackend() });
         const model = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 
@@ -275,14 +275,14 @@
             if (user) {
                 loginScreen.style.display = 'none';
                 mainContainer.style.display = 'flex';
-                document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}! Como ajudar hoje?`;
+                document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}!`;
             } else {
                 loginScreen.style.display = 'flex';
                 mainContainer.style.display = 'none';
             }
         });
 
-        // --- LÓGICA DE EXECUÇÃO (USANDO SDK OFICIAL) ---
+        // --- LÓGICA DE EXECUÇÃO ---
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
@@ -291,22 +291,16 @@
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            const systemContext = "Você é um assistente B2B especialista em cobrança e negociação. Analise o caso e forneça: 1) Um diagnóstico de risco curto. 2) Um script de mensagem para WhatsApp/Email. Separe os dois obrigatoriamente pelo delimitador '---'.";
+            const systemContext = "Você é um assistente B2B especialista em cobrança. Analise o caso e forneça: 1) Diagnóstico curto. 2) Script de mensagem profissional. Separe os dois por '---'.";
             
             try {
-                // Chamada do modelo via SDK
-                const result = await model.generateContent(`${systemContext}\n\nUsuário: ${promptValue}`);
+                const result = await model.generateContent(`${systemContext}\n\nCaso: ${promptValue}`);
                 const aiResponse = result.response.text();
 
-                // Divisão do conteúdo para os campos da UI
                 const parts = aiResponse.split('---');
-                const diagnostico = parts[0] ? parts[0].trim() : "Análise concluída.";
-                const script = parts[1] ? parts[1].trim() : aiResponse.trim();
+                iaDiagnostico.innerText = parts[0] ? parts[0].trim() : "Análise concluída.";
+                iaScript.innerText = parts[1] ? parts[1].trim() : aiResponse.trim();
 
-                iaDiagnostico.innerHTML = diagnostico;
-                iaScript.innerText = script;
-
-                // Salvar no Firestore (Mantido)
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
                         uid: auth.currentUser.uid,
@@ -318,15 +312,15 @@
 
                 mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error("Erro AI Logic:", error);
-                iaDiagnostico.innerText = "Erro ao processar. Verifique se a Gemini Developer API está ativa no Console.";
+                console.error("Erro AI:", error);
+                alert("Erro ao processar. Verifique se ativou o AI Logic no console.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
         });
 
-        // Eventos de UI
+        // Eventos
         promptInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); btnSubmit.click(); } });
         document.getElementById('btnCopiar').addEventListener('click', () => {
             navigator.clipboard.writeText(iaScript.innerText).then(() => {
