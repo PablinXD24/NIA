@@ -5,59 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE SIX - Assistente B2B AI</title>
     <style>
-        /* =========================================
-           ESTÉTICA ORIGINAL MANTIDA (LIQUID GLASS)
-           ========================================= */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        /* ESTÉTICA LIQUID GLASS */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
-        #login-screen { display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 100; }
-        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s; }
-        .btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-        .smart-container { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 24px; box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08); width: 100%; max-width: 700px; transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); overflow: hidden; display: none; flex-direction: column; position: relative; }
-        .smart-container.expanded { display: flex; }
-        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; overflow-y: auto; }
-        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); position: relative; z-index: 2; }
+        
+        .smart-container { 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(24px); 
+            border: 1px solid rgba(255, 255, 255, 0.9); 
+            border-radius: 24px; 
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08); 
+            width: 100%; 
+            max-width: 700px; 
+            display: flex; 
+            flex-direction: column; 
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); 
+            overflow: hidden; 
+        }
+
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); }
         .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
         .ai-badge { font-size: 12px; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 60px; }
+        
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 80px; }
+        
         .action-bar { display: flex; justify-content: space-between; align-items: center; }
         .status-text { font-size: 13px; color: #3498db; font-weight: 500; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
+        
         .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
-        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-        .results-area { max-height: 0; opacity: 0; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); background: rgba(255, 255, 255, 0.85); border-top: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
-        .result-block { margin-bottom: 24px; opacity: 0; transform: translateY(10px); }
-        .smart-container.expanded .result-block { animation: fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        .btn-submit:disabled { opacity: 0.5; }
+
+        .results-area { max-height: 0; opacity: 0; transition: all 0.6s ease; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
+        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; }
+
+        .result-block { margin-bottom: 24px; }
         .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .script-box { background: rgba(255, 255, 255, 0.9); border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
+        .script-box { background: white; border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
         .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        
         .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h1 style="color: #2c3e50; margin-bottom: 10px;">THE SIX AI</h1>
-        <button class="btn-google" id="btnGoogle">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" width="18" alt="Google">
-            Entrar com Google
-        </button>
-    </div>
-
     <div class="smart-container" id="mainContainer">
         <div class="prompt-area">
             <div class="header-title">
-                <span id="userGreeting">Como posso ajudar na cobrança?</span>
-                <span class="ai-badge">✦ Gemini 1.5 Flash + Local Engine</span>
+                <span>Central de Inteligência de Cobrança</span>
+                <span class="ai-badge">✦ THE SIX CORE</span>
             </div>
             
-            <textarea id="promptInput" placeholder="Descreva a situação ou digite uma dúvida..."></textarea>
+            <textarea id="promptInput" placeholder="Digite o nome do cliente ou a situação..."></textarea>
             
             <div class="action-bar">
                 <div class="status-text" id="statusText">
                     <div class="spinner"></div>
-                    Processando inteligência...
+                    Cruzando dados de cadastro e situação financeira...
                 </div>
                 
                 <button id="btnSubmit" class="btn-submit">
@@ -70,59 +74,29 @@
 
         <div class="results-area" id="resultsArea">
             <div class="result-block">
-                <div class="result-title">⚡ Diagnóstico da IA</div>
-                <div class="result-content" id="iaDiagnostico"></div>
+                <div class="result-title">⚡ Análise de Perfil e Risco</div>
+                <div id="iaDiagnostico"></div>
             </div>
 
             <div class="result-block">
-                <div class="result-title">✍️ Script Gerado</div>
+                <div class="result-title">✍️ Abordagem Sugerida</div>
                 <div class="script-box">
                     <button id="btnCopiar" class="btn-copy">Copiar</button>
-                    <div class="result-content" id="iaScript" style="white-space: pre-wrap;"></div>
+                    <div id="iaScript" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         import { GoogleGenAI } from "https://esm.run/@google/genai";
+        
+        // Importação dos dois arquivos do repositório
+        import { clients } from "./clientes.js"; 
+        import { situacao } from "./situacao.js";
 
-        // CONFIGURAÇÃO FIREBASE (MANTIDA)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
-            authDomain: "nova-96b06.firebaseapp.com",
-            projectId: "nova-96b06",
-            storageBucket: "nova-96b06.firebasestorage.app",
-            appId: "1:166967553772:web:475370390f719953afbfc9"
-        };
+        const genAI = new GoogleGenAI("AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk");
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        // INICIALIZAÇÃO CORRIGIDA GEMINI
-        const apiKey = "AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk";
-        const genAI = new GoogleGenAI(apiKey);
-
-        // ALGORITMO DE RESPOSTAS LOCAIS (MANTIDO)
-        const localKnowledge = [
-            { key: ["atraso", "vencido", "pagou"], diag: "Cliente com pendência financeira padrão.", script: "Olá, notamos que o boleto X venceu. Podemos ajudar com uma nova linha digitável?" },
-            { key: ["esqueci", "esquecimento"], diag: "Inadimplência não intencional.", script: "Compreendemos a correria! Segue o link para regularização do débito em aberto." },
-            { key: ["desconto", "juros", "reduzir"], diag: "Negociação de valores solicitada.", script: "Podemos avaliar uma isenção de juros para pagamento nas próximas 24 horas. O que acha?" },
-            { key: ["parcelar", "dividir"], diag: "Necessidade de flexibilização de fluxo.", script: "Temos a opção de parcelamento em até 3x sem juros no cartão ou boleto." }
-        ];
-
-        const findLocalResponse = (text) => {
-            const lowerText = text.toLowerCase();
-            return localKnowledge.find(item => item.key.some(k => lowerText.includes(k)));
-        };
-
-        // UI ELEMENTS
-        const loginScreen = document.getElementById('login-screen');
         const mainContainer = document.getElementById('mainContainer');
         const promptInput = document.getElementById('promptInput');
         const btnSubmit = document.getElementById('btnSubmit');
@@ -130,20 +104,25 @@
         const iaDiagnostico = document.getElementById('iaDiagnostico');
         const iaScript = document.getElementById('iaScript');
 
-        // AUTH LOGIC
-        document.getElementById('btnGoogle').addEventListener('click', async () => {
-            try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
-        });
+        // Função de busca inteligente em ambos os arquivos
+        const getFullClientContext = (text) => {
+            const input = text.toLowerCase();
+            
+            // Procura o cadastro
+            const cadastro = clients.find(c => input.includes(c.nome.toLowerCase()));
+            // Procura a situação financeira
+            const financeiro = situacao.find(s => input.includes(s.nome.toLowerCase()));
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loginScreen.style.display = 'none';
-                mainContainer.style.display = 'flex';
-                document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}!`;
-            }
-        });
+            if (!cadastro && !financeiro) return "";
 
-        // LOGIC PRINCIPAL ATUALIZADA E CORRIGIDA
+            return `
+            [DADOS DO CLIENTE IDENTIFICADO]
+            CADASTRO: ${cadastro ? `Nome: ${cadastro.nome}, Renda: ${cadastro.renda}, Est. Civil: ${cadastro.estado_civil}` : "Não localizado"}
+            SITUAÇÃO ATUAL: ${financeiro ? `Status: ${financeiro.status_divida}, Pendente: R$${financeiro.valor_pendente}, Score: ${financeiro.score_credito}, Limite: ${financeiro.limite_disponivel}` : "Não localizada"}
+            --- 
+            `;
+        };
+
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
@@ -152,60 +131,37 @@
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            const localMatch = findLocalResponse(promptValue);
+            const context = getFullClientContext(promptValue);
 
             try {
-                let diagResult, scriptResult;
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-1.5-flash",
+                    systemInstruction: "Você é um assistente B2B especializado em recuperação de crédito. Use os dados de CADASTRO e SITUAÇÃO fornecidos para criar uma estratégia personalizada. Se o score for baixo, seja mais firme. Se houver limite disponível, sugira parcelamento. Separe Diagnóstico de Script com '---'." 
+                });
 
-                if (localMatch) {
-                    diagResult = "[ENGINE LOCAL] " + localMatch.diag;
-                    scriptResult = localMatch.script;
-                } else {
-                    // CONFIGURAÇÃO DO MODELO COM SYSTEM INSTRUCTIONS
-                    const model = genAI.getGenerativeModel({ 
-                        model: "gemini-1.5-flash",
-                        systemInstruction: "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados obrigatoriamente por '---'." 
-                    });
+                const result = await model.generateContent(context + promptValue);
+                const responseText = (await result.response).text();
 
-                    const result = await model.generateContent(promptValue);
-                    const response = await result.response;
-                    const responseText = response.text();
+                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Análise processada.", responseText];
 
-                    if (responseText.includes('---')) {
-                        [diagResult, scriptResult] = responseText.split('---');
-                    } else {
-                        diagResult = "Análise inteligente concluída.";
-                        scriptResult = responseText;
-                    }
-                }
-
-                iaDiagnostico.innerText = diagResult.trim();
-                iaScript.innerText = scriptResult.trim();
-
-                if (auth.currentUser) {
-                    await setDoc(doc(db, "history", `${Date.now()}`), {
-                        uid: auth.currentUser.uid,
-                        prompt: promptValue,
-                        response: `${diagResult} --- ${scriptResult}`,
-                        timestamp: serverTimestamp()
-                    });
-                }
-
+                iaDiagnostico.innerText = diag.trim();
+                iaScript.innerText = script.trim();
                 mainContainer.classList.add('expanded');
+
             } catch (error) {
-                console.error("Erro na API Gemini:", error);
-                alert("Houve um erro na comunicação com a IA. Tente novamente.");
+                console.error(error);
+                alert("Erro ao conectar com a IA.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
         });
 
-        // UTILITÁRIOS
         document.getElementById('btnCopiar').addEventListener('click', () => {
             navigator.clipboard.writeText(iaScript.innerText);
-            document.getElementById('btnCopiar').innerText = "Copiado!";
-            setTimeout(() => document.getElementById('btnCopiar').innerText = "Copiar", 2000);
+            const btn = document.getElementById('btnCopiar');
+            btn.innerText = "Copiado!";
+            setTimeout(() => btn.innerText = "Copiar", 2000);
         });
 
         promptInput.addEventListener('keydown', (e) => {
