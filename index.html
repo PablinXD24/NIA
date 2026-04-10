@@ -102,9 +102,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         
-        // CORREÇÃO: Usando o modelo atualizado gemini-1.5-flash-002
+        // CORREÇÃO: Usando gemini-2.0-flash para evitar o erro de modelo aposentado
         const vertexAI = getVertexAI(app);
-        const model = getGenerativeModel(vertexAI, { model: "gemini-1.5-flash-002" });
+        const model = getGenerativeModel(vertexAI, { model: "gemini-2.0-flash" });
 
         const loginScreen = document.getElementById('login-screen');
         const mainContainer = document.getElementById('mainContainer');
@@ -147,7 +147,6 @@
             try {
                 const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
                 
-                // Chamada do modelo
                 const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
                 const response = await result.response;
                 const responseText = response.text();
@@ -173,7 +172,7 @@
                 mainContainer.classList.add('expanded');
             } catch (error) {
                 console.error("Erro na IA:", error);
-                alert("Erro ao gerar resposta. Verifique se o Vertex AI está habilitado no Console do Firebase (Caminho: Build > Vertex AI).");
+                alert("Erro ao gerar resposta. Verifique se o Vertex AI está habilitado e configurado no Console do Firebase.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
