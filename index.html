@@ -5,21 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE SIX - Assistente B2B AI</title>
     <style>
-        /* MANTIDA ESTÉTICA ORIGINAL (LIQUID GLASS) */
+        /* =========================================
+           ESTÉTICA ORIGINAL MANTIDA (LIQUID GLASS)
+           ========================================= */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
         #login-screen { display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 100; }
-        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; }
-        .smart-container { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 24px; box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08); width: 100%; max-width: 700px; transition: all 0.5s; overflow: hidden; display: none; flex-direction: column; }
-        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; }
-        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); }
-        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; }
+        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .smart-container { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 24px; box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08); width: 100%; max-width: 700px; transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); overflow: hidden; display: none; flex-direction: column; position: relative; }
+        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; overflow-y: auto; }
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); position: relative; z-index: 2; }
+        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
         .ai-badge { font-size: 12px; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; color: #2c3e50; outline: none; min-height: 60px; }
-        .status-text { font-size: 13px; color: #3498db; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
-        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        .results-area { max-height: 0; opacity: 0; transition: all 0.6s; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 60px; }
+        .action-bar { display: flex; justify-content: space-between; align-items: center; }
+        .status-text { font-size: 13px; color: #3498db; font-weight: 500; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
+        .results-area { max-height: 0; opacity: 0; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); background: rgba(255, 255, 255, 0.85); border-top: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
+        .result-block { margin-bottom: 24px; opacity: 0; transform: translateY(10px); }
+        .smart-container.expanded .result-block { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
         .script-box { background: rgba(255, 255, 255, 0.9); border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
+        .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
         .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
@@ -27,31 +36,47 @@
 <body>
 
     <div id="login-screen">
-        <h1 style="color: #2c3e50;">THE SIX AI</h1>
-        <button class="btn-google" id="btnGoogle">Entrar com Google</button>
+        <h1 style="color: #2c3e50; margin-bottom: 10px;">THE SIX AI</h1>
+        <button class="btn-google" id="btnGoogle">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" width="18" alt="Google">
+            Entrar com Google
+        </button>
     </div>
 
     <div class="smart-container" id="mainContainer">
         <div class="prompt-area">
             <div class="header-title">
                 <span id="userGreeting">Como posso ajudar na cobrança?</span>
-                <span class="ai-badge">✦ Gemini Free Logic</span>
+                <span class="ai-badge">✦ Gemini 1.5 Flash</span>
             </div>
-            <textarea id="promptInput" placeholder="Descreva a situação..."></textarea>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="status-text" id="statusText"><div class="spinner"></div> Processando...</div>
-                <button id="btnSubmit" class="btn-submit">➔</button>
+            
+            <textarea id="promptInput" placeholder="Descreva a situação da empresa ou cliente..."></textarea>
+            
+            <div class="action-bar">
+                <div class="status-text" id="statusText">
+                    <div class="spinner"></div>
+                    Processando inteligência...
+                </div>
+                
+                <button id="btnSubmit" class="btn-submit">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
             </div>
         </div>
+
         <div class="results-area" id="resultsArea">
-            <div style="margin-bottom: 24px;">
-                <div style="font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase;">⚡ Diagnóstico</div>
-                <div id="iaDiagnostico"></div>
+            <div class="result-block">
+                <div class="result-title">⚡ Diagnóstico da IA</div>
+                <div class="result-content" id="iaDiagnostico"></div>
             </div>
-            <div>
-                <div style="font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase;">✍️ Script</div>
+
+            <div class="result-block">
+                <div class="result-title">✍️ Script Gerado</div>
                 <div class="script-box">
-                    <div id="iaScript" style="white-space: pre-wrap;"></div>
+                    <button id="btnCopiar" class="btn-copy">Copiar</button>
+                    <div class="result-content" id="iaScript" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
         </div>
@@ -60,52 +85,109 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
+        // Configuração do seu Firebase Original (Plano Spark Gratuito)
         const firebaseConfig = {
             apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
             authDomain: "nova-96b06.firebaseapp.com",
             projectId: "nova-96b06",
+            storageBucket: "nova-96b06.firebasestorage.app",
             appId: "1:166967553772:web:475370390f719953afbfc9"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-        // CHAVE CORRIGIDA COM O 'b' MINÚSCULO CONFORME SEU CURL
+        // NOVA CHAVE QUE FUNCIONOU NO CURL
         const API_KEY = "AIzaSyAcnxs8sCRWGhYNa7blpj594YPunw9LP4s";
         const genAI = new GoogleGenerativeAI(API_KEY);
+        // Usando o modelo flash estável
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const loginScreen = document.getElementById('login-screen');
+        const mainContainer = document.getElementById('mainContainer');
+        const promptInput = document.getElementById('promptInput');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const statusText = document.getElementById('statusText');
+        const iaDiagnostico = document.getElementById('iaDiagnostico');
+        const iaScript = document.getElementById('iaScript');
+
+        // Login
+        document.getElementById('btnGoogle').addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Erro no login:", error);
+            }
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'flex';
+                loginScreen.style.display = 'none';
+                mainContainer.style.display = 'flex';
                 document.getElementById('userGreeting').innerText = `Olá, ${user.displayName.split(' ')[0]}!`;
             }
         });
 
-        document.getElementById('btnGoogle').addEventListener('click', () => signInWithPopup(auth, new GoogleAuthProvider()));
+        // IA
+        btnSubmit.addEventListener('click', async () => {
+            const promptValue = promptInput.value.trim();
+            if (!promptValue || btnSubmit.disabled) return;
 
-        document.getElementById('btnSubmit').addEventListener('click', async () => {
-            const promptValue = document.getElementById('promptInput').value.trim();
-            if (!promptValue) return;
+            btnSubmit.disabled = true;
+            statusText.style.opacity = "1";
+            mainContainer.classList.remove('expanded');
 
-            document.getElementById('statusText').style.opacity = "1";
             try {
-                const result = await model.generateContent("Você é um especialista em cobrança B2B. Analise e crie um script para: " + promptValue + ". Separe o diagnóstico do script por '---'");
+                const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
+                
+                const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
                 const response = await result.response;
-                const text = response.text();
+                const responseText = response.text();
 
-                const [diag, script] = text.split('---');
-                document.getElementById('iaDiagnostico').innerText = diag.trim();
-                document.getElementById('iaScript').innerText = script ? script.trim() : text;
-                document.getElementById('mainContainer').classList.add('expanded');
+                if (responseText.includes('---')) {
+                    const [diag, script] = responseText.split('---');
+                    iaDiagnostico.innerText = diag.trim();
+                    iaScript.innerText = script.trim();
+                } else {
+                    iaDiagnostico.innerText = "Análise concluída.";
+                    iaScript.innerText = responseText.trim();
+                }
+
+                // Salvar Histórico no Firestore
+                if (auth.currentUser) {
+                    await setDoc(doc(db, "history", `${Date.now()}`), {
+                        uid: auth.currentUser.uid,
+                        prompt: promptValue,
+                        response: responseText,
+                        timestamp: serverTimestamp()
+                    });
+                }
+
+                mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error(error);
-                alert("Erro na chave de API. Verifique se ela está ativa no Google AI Studio.");
+                console.error("Erro na IA:", error);
+                alert("Erro ao gerar resposta. Verifique a chave de API.");
             } finally {
-                document.getElementById('statusText').style.opacity = "0";
+                statusText.style.opacity = "0";
+                btnSubmit.disabled = false;
+            }
+        });
+
+        document.getElementById('btnCopiar').addEventListener('click', () => {
+            navigator.clipboard.writeText(iaScript.innerText);
+            document.getElementById('btnCopiar').innerText = "Copiado!";
+            setTimeout(() => document.getElementById('btnCopiar').innerText = "Copiar", 2000);
+        });
+
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                btnSubmit.click();
             }
         });
     </script>
