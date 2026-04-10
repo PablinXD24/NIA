@@ -88,14 +88,14 @@
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // CONFIGURAÇÃO FIREBASE (MANTIDA)
-const firebaseConfig = {
-    apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E", // Verifique se não há espaços extras
-    authDomain: "nova-96b06.firebaseapp.com",
-    projectId: "nova-96b06",
-    storageBucket: "nova-96b06.firebasestorage.app",
-    appId: "1:166967553772:web:475370390f719953afbfc9"
-};
+        // CONFIGURAÇÃO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
+            authDomain: "nova-96b06.firebaseapp.com",
+            projectId: "nova-96b06",
+            storageBucket: "nova-96b06.firebasestorage.app",
+            appId: "1:166967553772:web:475370390f719953afbfc9"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -104,20 +104,21 @@ const firebaseConfig = {
 
         const API_KEY = "AIzaSyA6yizRr-uymEpviFzrDYyPz1MpKxqgxUY";
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // CORREÇÃO: Adicionado 'models/' antes do nome do modelo para evitar Erro 404
+        const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
 
         // =========================================
-        // ALGORITMO DE RESPOSTAS LOCAIS (200 OPÇÕES)
+        // ALGORITMO DE RESPOSTAS LOCAIS
         // =========================================
         const localKnowledge = [
             { key: ["atraso", "vencido", "pagou"], diag: "Cliente com pendência financeira padrão.", script: "Olá, notamos que o boleto X venceu. Podemos ajudar com uma nova linha digitável?" },
             { key: ["esqueci", "esquecimento"], diag: "Inadimplência não intencional.", script: "Compreendemos a correria! Segue o link para regularização do débito em aberto." },
             { key: ["desconto", "juros", "reduzir"], diag: "Negociação de valores solicitada.", script: "Podemos avaliar uma isenção de juros para pagamento nas próximas 24 horas. O que acha?" },
-            { key: ["parcelar", "dividir"], diag: "Necessidade de flexibilização de fluxo.", script: "Temos a opção de parcelamento em até 3x sem juros no cartão ou boleto." },
-            // ... O algoritmo buscará por palavras-chave. Abaixo simulamos a lógica para 200 variações
+            { key: ["parcelar", "dividir"], diag: "Necessidade de flexibilização de fluxo.", script: "Temos a opção de parcelamento em até 3x sem juros no cartão ou boleto." }
         ];
 
-        // Gerador de variações (Algoritmo para expandir base de conhecimento)
+        // Gerador de variações
         for(let i=0; i<196; i++) {
             localKnowledge.push({
                 key: [`opção${i}`, `duvida${i}`],
@@ -153,7 +154,7 @@ const firebaseConfig = {
             }
         });
 
-        // LOGIC PRINCIPAL (HIBRIDA: LOCAL + GEMINI)
+        // LOGIC PRINCIPAL
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
@@ -162,7 +163,6 @@ const firebaseConfig = {
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            // 1. Tentar Resposta Local primeiro (Velocidade)
             const localMatch = findLocalResponse(promptValue);
 
             try {
@@ -172,7 +172,6 @@ const firebaseConfig = {
                     diagResult = "[ENGINE LOCAL] " + localMatch.diag;
                     scriptResult = localMatch.script;
                 } else {
-                    // 2. Fallback para Gemini se não houver match local
                     const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
                     const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
                     const response = await result.response;
@@ -186,11 +185,9 @@ const firebaseConfig = {
                     }
                 }
 
-                // Renderização
                 iaDiagnostico.innerText = diagResult.trim();
                 iaScript.innerText = scriptResult.trim();
 
-                // Salvar Histórico
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
                         uid: auth.currentUser.uid,
@@ -202,8 +199,8 @@ const firebaseConfig = {
 
                 mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error("Erro:", error);
-                alert("Erro ao processar. Verifique sua conexão.");
+                console.error("Erro detalhado:", error);
+                alert("Erro ao processar a inteligência. Verifique o console para mais detalhes.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
