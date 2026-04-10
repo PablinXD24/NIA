@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE SIX - Assistente B2B AI</title>
+    <title>THE SIX - Consulta de Dados</title>
     <style>
         /* ESTÉTICA LIQUID GLASS */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
@@ -19,32 +19,28 @@
             max-width: 700px; 
             display: flex; 
             flex-direction: column; 
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); 
+            transition: all 0.5s ease; 
             overflow: hidden; 
         }
 
         .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); }
         .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
-        .ai-badge { font-size: 12px; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
         
-        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 80px; }
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 60px; }
         
-        .action-bar { display: flex; justify-content: space-between; align-items: center; }
-        .status-text { font-size: 13px; color: #3498db; font-weight: 500; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
+        .action-bar { display: flex; justify-content: flex-end; align-items: center; }
         
         .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
-        .btn-submit:disabled { opacity: 0.5; }
 
-        .results-area { max-height: 0; opacity: 0; transition: all 0.6s ease; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
-        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; }
+        .results-area { max-height: 0; opacity: 0; transition: all 0.5s ease; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
+        .smart-container.expanded .results-area { max-height: 1000px; opacity: 1; padding: 32px 24px; }
 
-        .result-block { margin-bottom: 24px; }
-        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .script-box { background: white; border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
-        .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .result-block { margin-bottom: 24px; padding: 15px; border-radius: 12px; background: white; border: 1px solid rgba(0,0,0,0.05); }
+        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .data-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 15px; color: #2c3e50; }
+        .data-label { font-weight: 600; color: #596a7b; }
         
-        .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .not-found { color: #e74c3c; font-weight: 600; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
@@ -52,18 +48,13 @@
     <div class="smart-container" id="mainContainer">
         <div class="prompt-area">
             <div class="header-title">
-                <span>Central de Inteligência de Cobrança</span>
-                <span class="ai-badge">✦ THE SIX CORE</span>
+                <span>Consulta de Base de Dados Local</span>
+                <span style="font-weight: 700; color: #2c3e50;">THE SIX</span>
             </div>
             
-            <textarea id="promptInput" placeholder="Ex: Fale com o João Silva sobre o atraso..."></textarea>
+            <textarea id="promptInput" placeholder="Digite o nome do cliente para buscar..."></textarea>
             
             <div class="action-bar">
-                <div class="status-text" id="statusText">
-                    <div class="spinner"></div>
-                    Analisando arquivos JSON e Gerando Resposta...
-                </div>
-                
                 <button id="btnSubmit" class="btn-submit">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -73,118 +64,87 @@
         </div>
 
         <div class="results-area" id="resultsArea">
-            <div class="result-block">
-                <div class="result-title">⚡ Análise de Perfil e Risco</div>
-                <div id="iaDiagnostico"></div>
             </div>
-
-            <div class="result-block">
-                <div class="result-title">✍️ Abordagem Sugerida</div>
-                <div class="script-box">
-                    <button id="btnCopiar" class="btn-copy">Copiar</button>
-                    <div id="iaScript" style="white-space: pre-wrap;"></div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script type="module">
-        import { GoogleGenAI } from "https://esm.run/@google/genai";
-        
-        // CHAVE DE API CONFIGURADA DIRETAMENTE NA INSTÂNCIA
-        const API_KEY = "AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk";
-        const genAI = new GoogleGenAI(API_KEY);
-
         const mainContainer = document.getElementById('mainContainer');
         const promptInput = document.getElementById('promptInput');
         const btnSubmit = document.getElementById('btnSubmit');
-        const statusText = document.getElementById('statusText');
-        const iaDiagnostico = document.getElementById('iaDiagnostico');
-        const iaScript = document.getElementById('iaScript');
+        const resultsArea = document.getElementById('resultsArea');
 
-        // Função para carregar e buscar nos arquivos JSON
-        async function getContextFromJSON(userInput) {
+        // Função Principal de Busca
+        async function buscarDados() {
+            const termoBusca = promptInput.value.trim().toLowerCase();
+            if (!termoBusca) return;
+
             try {
-                // Fetch dos arquivos JSON (devem estar na mesma pasta do index.html)
-                const resClientes = await fetch('./clientes.json');
-                const resSituacao = await fetch('./situacao.json');
+                // Puxando dados dos arquivos JSON no repositório
+                const [resClientes, resSituacao] = await Promise.all([
+                    fetch('./clientes.json'),
+                    fetch('./situacao.json')
+                ]);
 
-                if (!resClientes.ok || !resSituacao.ok) throw new Error("Arquivos JSON não encontrados");
+                if (!resClientes.ok || !resSituacao.ok) throw new Error("Erro ao carregar arquivos JSON");
 
                 const clientes = await resClientes.json();
                 const situacoes = await resSituacao.json();
 
-                const inputLower = userInput.toLowerCase();
+                // Filtrando por nome
+                const cliente = clientes.find(c => termoBusca.includes(c.nome.toLowerCase()) || c.nome.toLowerCase().includes(termoBusca));
+                const status = situacoes.find(s => termoBusca.includes(s.nome.toLowerCase()) || s.nome.toLowerCase().includes(termoBusca));
 
-                // Busca por correspondência de nome
-                const clienteData = clientes.find(c => inputLower.includes(c.nome.toLowerCase()));
-                const situacaoData = situacoes.find(s => inputLower.includes(s.nome.toLowerCase()));
-
-                if (!clienteData && !situacaoData) return "";
-
-                return `
-[DADOS DO CLIENTE LOCALIZADOS NO SISTEMA]
-CADASTRO: ${clienteData ? `Nome: ${clienteData.nome}, Renda: R$${clienteData.renda}, Civil: ${clienteData.estado_civil}` : "Dados cadastrais não vinculados."}
-FINANCEIRO: ${situacaoData ? `Status: ${situacaoData.status_divida}, Pendente: R$${situacaoData.valor_pendente}, Score: ${situacaoData.score_credito}` : "Dados financeiros não vinculados."}
---- 
-`;
-            } catch (e) {
-                console.warn("Aviso: Não foi possível carregar os dados locais.", e);
-                return "";
-            }
-        }
-
-        btnSubmit.addEventListener('click', async () => {
-            const promptValue = promptInput.value.trim();
-            if (!promptValue || btnSubmit.disabled) return;
-
-            btnSubmit.disabled = true;
-            statusText.style.opacity = "1";
-            mainContainer.classList.remove('expanded');
-
-            // 1. Coleta contexto dos arquivos locais
-            const context = await getContextFromJSON(promptValue);
-
-            try {
-                // 2. Configura o modelo
-                const model = genAI.getGenerativeModel({ 
-                    model: "gemini-1.5-flash",
-                    systemInstruction: "Você é um especialista em cobrança e análise de crédito. Use os dados fornecidos para criar uma estratégia personalizada. Responda em duas partes: um diagnóstico de risco e um script de conversa amigável mas firme. Separe os dois com '---'." 
-                });
-
-                // 3. Executa a geração
-                const result = await model.generateContent(context + promptValue);
-                const response = await result.response;
-                const responseText = response.text();
-
-                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Diagnóstico concluído.", responseText];
-
-                iaDiagnostico.innerText = diag.trim();
-                iaScript.innerText = script.trim();
+                exibirResultados(cliente, status);
                 mainContainer.classList.add('expanded');
 
             } catch (error) {
-                console.error("Erro na API:", error);
-                alert("Erro ao processar sua solicitação. Verifique sua chave de API.");
-            } finally {
-                statusText.style.opacity = "0";
-                btnSubmit.disabled = false;
+                console.error(error);
+                resultsArea.innerHTML = `<div class="not-found">Erro: Certifique-se que os arquivos .json estão no mesmo repositório.</div>`;
+                mainContainer.classList.add('expanded');
             }
-        });
+        }
 
-        // Botão de Copiar
-        document.getElementById('btnCopiar').addEventListener('click', () => {
-            navigator.clipboard.writeText(iaScript.innerText);
-            const btn = document.getElementById('btnCopiar');
-            btn.innerText = "Copiado!";
-            setTimeout(() => btn.innerText = "Copiar", 2000);
-        });
+        // Função para construir o HTML dos resultados
+        function exibirResultados(cliente, status) {
+            if (!cliente && !status) {
+                resultsArea.innerHTML = `<div class="not-found">Nenhum dado encontrado para este termo.</div>`;
+                return;
+            }
 
-        // Atalho Enter
+            let html = "";
+
+            if (cliente) {
+                html += `
+                <div class="result-block">
+                    <div class="result-title">👤 Informações Pessoais</div>
+                    <div class="data-row"><span class="data-label">Nome:</span> <span>${cliente.nome}</span></div>
+                    <div class="data-row"><span class="data-label">CPF:</span> <span>${cliente.cpf}</span></div>
+                    <div class="data-row"><span class="data-label">Renda:</span> <span>R$ ${cliente.renda}</span></div>
+                    <div class="data-row"><span class="data-label">Estado Civil:</span> <span>${cliente.estado_civil}</span></div>
+                </div>`;
+            }
+
+            if (status) {
+                html += `
+                <div class="result-block">
+                    <div class="result-title">📊 Situação Financeira</div>
+                    <div class="data-row"><span class="data-label">Status:</span> <span>${status.status_divida}</span></div>
+                    <div class="data-row"><span class="data-label">Dívida Pendente:</span> <span style="color: #e74c3c">R$ ${status.valor_pendente}</span></div>
+                    <div class="data-row"><span class="data-label">Score:</span> <span>${status.score_credito}</span></div>
+                    <div class="data-row"><span class="data-label">Limite Disponível:</span> <span>R$ ${status.limite_disponivel}</span></div>
+                </div>`;
+            }
+
+            resultsArea.innerHTML = html;
+        }
+
+        // Eventos
+        btnSubmit.addEventListener('click', buscarDados);
+        
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                btnSubmit.click();
+                buscarDados();
             }
         });
     </script>
