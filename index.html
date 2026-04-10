@@ -47,7 +47,7 @@
         <div class="prompt-area">
             <div class="header-title">
                 <span id="userGreeting">Como posso ajudar na cobrança?</span>
-                <span class="ai-badge">✦ Gemini 1.5 Flash + Local Engine</span>
+                <span class="ai-badge">✦ Gemini 3 Flash + Local Engine</span>
             </div>
             
             <textarea id="promptInput" placeholder="Descreva a situação ou digite uma dúvida..."></textarea>
@@ -86,9 +86,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+        // IMPORTAÇÃO DA NOVA BIBLIOTECA ATUALIZADA
+        import { GoogleGenAI } from "https://esm.run/@google/genai";
 
-        // CONFIGURAÇÃO FIREBASE
+        // CONFIGURAÇÃO FIREBASE (MANTIDA)
         const firebaseConfig = {
             apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
             authDomain: "nova-96b06.firebaseapp.com",
@@ -102,14 +103,12 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        const API_KEY = "AIzaSyA6yizRr-uymEpviFzrDYyPz1MpKxqgxUY";
-        const genAI = new GoogleGenerativeAI(API_KEY);
-        
-        // CORREÇÃO: Adicionado 'models/' antes do nome do modelo para evitar Erro 404
-        const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+        // INICIALIZAÇÃO COM O NOVO SDK GEMINI 3
+        const apiKey = "AIzaSyA6yizRr-uymEpviFzrDYyPz1MpKxqgxUY";
+        const ai = new GoogleGenAI({ apiKey });
 
         // =========================================
-        // ALGORITMO DE RESPOSTAS LOCAIS
+        // ALGORITMO DE RESPOSTAS LOCAIS (MANTIDO)
         // =========================================
         const localKnowledge = [
             { key: ["atraso", "vencido", "pagou"], diag: "Cliente com pendência financeira padrão.", script: "Olá, notamos que o boleto X venceu. Podemos ajudar com uma nova linha digitável?" },
@@ -118,7 +117,6 @@
             { key: ["parcelar", "dividir"], diag: "Necessidade de flexibilização de fluxo.", script: "Temos a opção de parcelamento em até 3x sem juros no cartão ou boleto." }
         ];
 
-        // Gerador de variações
         for(let i=0; i<196; i++) {
             localKnowledge.push({
                 key: [`opção${i}`, `duvida${i}`],
@@ -154,7 +152,7 @@
             }
         });
 
-        // LOGIC PRINCIPAL
+        // LOGIC PRINCIPAL ATUALIZADA PARA O NOVO SDK
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
@@ -172,15 +170,22 @@
                     diagResult = "[ENGINE LOCAL] " + localMatch.diag;
                     scriptResult = localMatch.script;
                 } else {
-                    const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
-                    const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
-                    const response = await result.response;
-                    const responseText = response.text();
+                    // USO DO NOVO MÉTODO E MODELO GEMINI 3 FLASH PREVIEW
+                    const response = await ai.models.generateContent({
+                        model: "gemini-3-flash-preview",
+                        contents: promptValue,
+                        config: {
+                            systemInstruction: "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.", //
+                            temperature: 1.0 // Recomendado para Gemini 3
+                        }
+                    });
+                    
+                    const responseText = response.text; //
 
                     if (responseText.includes('---')) {
                         [diagResult, scriptResult] = responseText.split('---');
                     } else {
-                        diagResult = "Análise complexa concluída.";
+                        diagResult = "Análise inteligente concluída.";
                         scriptResult = responseText;
                     }
                 }
@@ -199,8 +204,8 @@
 
                 mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error("Erro detalhado:", error);
-                alert("Erro ao processar a inteligência. Verifique o console para mais detalhes.");
+                console.error("Erro na API Gemini 3:", error);
+                alert("Houve um erro na comunicação com a IA. Tente novamente.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
