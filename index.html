@@ -232,11 +232,12 @@
     </div>
 
     <script type="module">
-        // Importações unificadas na versão 11.4.0
+        // Importações corrigidas para evitar o erro 404
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-ai.js";
+        // Importação correta para o SDK do Gemini Web
+        import { getGenerativeModel, getVertexAI } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-vertexai.js";
 
         // Configuração do seu projeto
         const firebaseConfig = {
@@ -254,9 +255,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         
-        // Inicialização IA
-        const ai = getAI(app, { backend: new GoogleAIBackend() });
-        const model = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
+        // Inicialização IA usando o módulo Vertex AI (padrão Firebase para Gemini)
+        const vertexAI = getVertexAI(app);
+        const model = getGenerativeModel(vertexAI, { model: "gemini-1.5-flash" });
 
         // Elementos da Interface
         const loginScreen = document.getElementById('login-screen');
@@ -271,7 +272,6 @@
         const loginBtn = document.getElementById('btnGoogle');
         loginBtn.addEventListener('click', async () => {
             try {
-                // Força a seleção de conta para evitar erros de cache do navegador
                 provider.setCustomParameters({ prompt: 'select_account' });
                 await signInWithPopup(auth, provider);
             } catch (error) {
@@ -303,14 +303,17 @@
 
             try {
                 const systemMsg = "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.";
+                
+                // Chamada do modelo Gemini
                 const result = await model.generateContent(`${systemMsg}\n\nCliente: ${promptValue}`);
-                const responseText = result.response.text();
+                const response = await result.response;
+                const responseText = response.text();
 
                 const [diag, script] = responseText.split('---');
                 iaDiagnostico.innerText = diag ? diag.trim() : "Análise concluída.";
                 iaScript.innerText = script ? script.trim() : responseText.trim();
 
-                // Salvar histórico
+                // Salvar histórico no Firestore
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
                         uid: auth.currentUser.uid,
@@ -323,7 +326,7 @@
                 mainContainer.classList.add('expanded');
             } catch (error) {
                 console.error("Erro na IA:", error);
-                alert("Erro ao gerar resposta. Verifique a ativação do AI Logic no console.");
+                alert("Erro ao gerar resposta. Certifique-se de que o 'Vertex AI for Firebase' está habilitado no seu console Firebase.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
