@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIA - Sorteador de Situação</title>
+    <title>THE SIX - NIA System</title>
     <style>
         /* ESTÉTICA LIQUID GLASS */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
@@ -17,545 +17,169 @@
             box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08); 
             width: 100%; 
             max-width: 700px; 
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); 
+            overflow: hidden; 
             display: flex; 
             flex-direction: column; 
-            transition: all 0.5s ease; 
-            overflow: hidden; 
         }
 
-        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); text-align: center; }
-        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(255, 255, 255, 0.3); }
+        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
         
-        .instruction { font-size: 16px; color: #2c3e50; margin-bottom: 10px; }
-        
-        .action-bar { display: flex; justify-content: center; align-items: center; padding-bottom: 10px; }
-        
-        .btn-submit { 
-            background: #2c3e50; 
-            color: white; 
-            border: none; 
-            border-radius: 30px; 
-            padding: 12px 30px; 
-            font-size: 16px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        .ai-badge { 
+            font-size: 12px; 
+            background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            font-weight: 800; 
+            letter-spacing: 1px;
         }
-        .btn-submit:hover { background: #34495e; transform: translateY(-2px); }
+        
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; line-height: 1.5; color: #2c3e50; outline: none; min-height: 60px; }
+        
+        .action-bar { display: flex; justify-content: space-between; align-items: center; }
+        .status-text { font-size: 13px; color: #3498db; font-weight: 500; opacity: 0; display: flex; align-items: center; gap: 8px; }
+        
+        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { transform: scale(1.1); background: #000; }
 
-        .results-area { max-height: 0; opacity: 0; transition: all 0.5s ease; background: rgba(255, 255, 255, 0.85); overflow: hidden; }
-        .smart-container.expanded .results-area { max-height: 1000px; opacity: 1; padding: 32px 24px; }
+        .results-area { max-height: 0; opacity: 0; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); background: rgba(255, 255, 255, 0.85); border-top: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
+        .expanded .results-area { max-height: 1000px; opacity: 1; padding: 32px 24px; }
 
-        .result-block { margin-bottom: 24px; padding: 20px; border-radius: 16px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .result-title { font-size: 13px; font-weight: 700; color: #3498db; margin-bottom: 15px; text-transform: uppercase; }
-        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f3f5; }
-        .data-row:last-child { border-bottom: none; }
-        .data-label { color: #7f8c8d; font-weight: 500; }
-        .data-value { color: #2c3e50; font-weight: 600; }
+        .result-block { margin-bottom: 24px; }
+        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .script-box { background: white; border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        
+        .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="smart-container" id="mainContainer">
         <div class="prompt-area">
-            <div class="header-title">Sistema de Análise</div>
-            <p class="instruction">Clique abaixo para sortear um cliente e verificar sua situação financeira.</p>
+            <div class="header-title">
+                <span>Insira seu prompt de análise de clientes</span>
+                <span class="ai-badge">✦ NIA System</span>
+            </div>
+            
+            <textarea id="promptInput" placeholder="Ex: Analise a situação de Pablo Soares..."></textarea>
+            
             <div class="action-bar">
-                <button class="btn-submit" id="btnSortear">SORTEAR CLIENTE</button>
+                <div class="status-text" id="statusText">
+                    <div class="spinner"></div> NIA processando dados...
+                </div>
+                
+                <button id="btnSubmit" class="btn-submit">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <div class="results-area" id="resultsArea">
+        <div class="results-area">
+            <div class="result-block">
+                <div class="result-title">⚡ Diagnóstico da NIA</div>
+                <div id="iaDiagnostico" style="color: #2c3e50; font-size: 16px; line-height: 1.4;"></div>
             </div>
+
+            <div class="result-block">
+                <div class="result-title">✍️ Script Sugerido</div>
+                <div class="script-box">
+                    <button id="btnCopiar" class="btn-copy">Copiar</button>
+                    <div id="iaScript" style="white-space: pre-wrap; color: #34495e; font-size: 15px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // Dados do arquivo clientes.json
-        const clients = [
-            { "nome": "João Silva", "idade": 35, "cpf": "123.456.789-00", "renda": 4500.75, "estado_civil": "Casado" },
-            { "nome": "Maria Oliveira", "idade": 28, "cpf": "987.654.321-00", "renda": 3200.50, "estado_civil": "Solteira" },
-            { "nome": "Carlos Souza", "idade": 42, "cpf": "111.222.333-44", "renda": 7800.00, "estado_civil": "Divorciado" },
-            { "nome": "Ana Santos", "idade": 30, "cpf": "555.666.777-88", "renda": 5100.20, "estado_civil": "Casada" },
-            { "nome": "Pedro Lima", "idade": 25, "cpf": "999.888.777-66", "renda": 2700.00, "estado_civil": "Solteiro" },
-            { "nome": "Fernanda Costa", "idade": 33, "cpf": "222.333.444-55", "renda": 6200.10, "estado_civil": "Casada" }
-            // ... outros clientes do repositório { "nome": "João Silva", "idade": 35, "cpf": "123.456.789-00", "renda": 4500.75, "estado_civil": "Casado" },
-  { "nome": "Maria Oliveira", "idade": 28, "cpf": "987.654.321-00", "renda": 3200.50, "estado_civil": "Solteira" },
-  { "nome": "Carlos Souza", "idade": 42, "cpf": "111.222.333-44", "renda": 7800.00, "estado_civil": "Divorciado" },
-  { "nome": "Ana Santos", "idade": 30, "cpf": "555.666.777-88", "renda": 5100.20, "estado_civil": "Casada" },
-  { "nome": "Pedro Lima", "idade": 25, "cpf": "999.888.777-66", "renda": 2700.00, "estado_civil": "Solteiro" },
-  { "nome": "Fernanda Costa", "idade": 33, "cpf": "222.333.444-55", "renda": 6200.10, "estado_civil": "Casada" },
-  { "nome": "Bruno Rocha", "idade": 40, "cpf": "333.444.555-66", "renda": 8400.00, "estado_civil": "Casado" },
-  { "nome": "Juliana Alves", "idade": 27, "cpf": "444.555.666-77", "renda": 3100.00, "estado_civil": "Solteira" },
-  { "nome": "Ricardo Pereira", "idade": 38, "cpf": "555.666.777-11", "renda": 7300.50, "estado_civil": "Divorciado" },
-  { "nome": "Patricia Gomes", "idade": 29, "cpf": "666.777.888-22", "renda": 3900.90, "estado_civil": "Solteira" },
-  { "nome": "Lucas Martins", "idade": 31, "cpf": "777.888.999-33", "renda": 5200.00, "estado_civil": "Casado" },
-  { "nome": "Camila Ribeiro", "idade": 26, "cpf": "888.999.000-44", "renda": 2800.75, "estado_civil": "Solteira" },
-  { "nome": "Gustavo Carvalho", "idade": 45, "cpf": "999.000.111-55", "renda": 9100.30, "estado_civil": "Casado" },
-  { "nome": "Aline Barros", "idade": 34, "cpf": "101.202.303-40", "renda": 6100.00, "estado_civil": "Casada" },
-  { "nome": "Eduardo Melo", "idade": 37, "cpf": "202.303.404-50", "renda": 6800.80, "estado_civil": "Casado" },
-  { "nome": "Larissa Freitas", "idade": 24, "cpf": "303.404.505-60", "renda": 2600.00, "estado_civil": "Solteira" },
-  { "nome": "Rafael Batista", "idade": 39, "cpf": "404.505.606-70", "renda": 7500.00, "estado_civil": "Divorciado" },
-  { "nome": "Beatriz Nunes", "idade": 32, "cpf": "505.606.707-80", "renda": 5400.25, "estado_civil": "Casada" },
-  { "nome": "Felipe Teixeira", "idade": 29, "cpf": "606.707.808-90", "renda": 4100.00, "estado_civil": "Solteiro" },
-  { "nome": "Renata Lopes", "idade": 36, "cpf": "707.808.909-01", "renda": 6700.00, "estado_civil": "Casada" },
-  { "nome": "Diego Fernandes", "idade": 41, "cpf": "808.909.101-12", "renda": 8800.00, "estado_civil": "Casado" },
-  { "nome": "Vanessa Moreira", "idade": 27, "cpf": "909.101.202-23", "renda": 3000.00, "estado_civil": "Solteira" },
-  { "nome": "Thiago Cardoso", "idade": 33, "cpf": "111.213.314-24", "renda": 5900.00, "estado_civil": "Casado" },
-  { "nome": "Priscila Duarte", "idade": 28, "cpf": "222.324.425-35", "renda": 3500.50, "estado_civil": "Solteira" },
-  { "nome": "André Araujo", "idade": 44, "cpf": "333.435.536-46", "renda": 9200.00, "estado_civil": "Divorciado" },
-  { "nome": "Simone Farias", "idade": 31, "cpf": "444.546.647-57", "renda": 5200.90, "estado_civil": "Casada" },
-  { "nome": "Marcelo Pires", "idade": 38, "cpf": "555.657.758-68", "renda": 7100.00, "estado_civil": "Casado" },
-  { "nome": "Tatiane Moura", "idade": 26, "cpf": "666.768.869-79", "renda": 2900.00, "estado_civil": "Solteira" },
-  { "nome": "Leonardo Cunha", "idade": 40, "cpf": "777.879.970-80", "renda": 8600.00, "estado_civil": "Casado" },
-  { "nome": "Carla Peixoto", "idade": 35, "cpf": "888.980.081-91", "renda": 6300.00, "estado_civil": "Casada" },
-  { "nome": "Rodrigo Braga", "idade": 37, "cpf": "999.091.192-02", "renda": 7000.00, "estado_civil": "Divorciado" },
-  { "nome": "Julio Cesar", "idade": 43, "cpf": "101.102.203-13", "renda": 8900.00, "estado_civil": "Casado" },
-  { "nome": "Paula Matos", "idade": 30, "cpf": "202.203.304-24", "renda": 4800.00, "estado_civil": "Casada" },
-  { "nome": "Vinicius Reis", "idade": 28, "cpf": "303.304.405-35", "renda": 3600.00, "estado_civil": "Solteiro" },
-  { "nome": "Monica Torres", "idade": 34, "cpf": "404.405.506-46", "renda": 6000.00, "estado_civil": "Casada" },
-  { "nome": "Igor Santana", "idade": 27, "cpf": "505.506.607-57", "renda": 3100.00, "estado_civil": "Solteiro" },
-  { "nome": "Cintia Guedes", "idade": 36, "cpf": "606.607.708-68", "renda": 6500.00, "estado_civil": "Casada" },
-  { "nome": "Alexandre Pinto", "idade": 41, "cpf": "707.708.809-79", "renda": 8700.00, "estado_civil": "Casado" },
-  { "nome": "Debora Tavares", "idade": 29, "cpf": "808.809.900-80", "renda": 3900.00, "estado_civil": "Solteira" },
-  { "nome": "Sergio Queiroz", "idade": 45, "cpf": "909.900.101-91", "renda": 9500.00, "estado_civil": "Casado" },
-  { "nome": "Elaine Castro", "idade": 33, "cpf": "111.112.113-02", "renda": 5400.00, "estado_civil": "Casada" },
-  { "nome": "Otavio Rezende", "idade": 38, "cpf": "222.223.224-13", "renda": 7200.00, "estado_civil": "Casado" },
-  { "nome": "Raquel Mendes", "idade": 26, "cpf": "333.334.335-24", "renda": 2800.00, "estado_civil": "Solteira" },
-  { "nome": "Hugo Sales", "idade": 39, "cpf": "444.445.446-35", "renda": 7600.00, "estado_civil": "Divorciado" },
-  { "nome": "Claudia Borges", "idade": 35, "cpf": "555.556.557-46", "renda": 6200.00, "estado_civil": "Casada" },
-  { "nome": "Danilo Freire", "idade": 32, "cpf": "666.667.668-57", "renda": 5100.00, "estado_civil": "Casado" },
-  { "nome": "Viviane Andrade", "idade": 28, "cpf": "777.778.779-68", "renda": 3400.00, "estado_civil": "Solteira" },
-  { "nome": "Leandro Viana", "idade": 42, "cpf": "888.889.880-79", "renda": 8300.00, "estado_civil": "Casado" },
-  { "nome": "Cristiane Lopes", "idade": 31, "cpf": "999.990.991-80", "renda": 5000.00, "estado_civil": "Casada" },
-  { "nome": "Marcos Vieira", "idade": 46, "cpf": "123.001.002-03", "renda": 10200.00, "estado_civil": "Casado" },
-  { "nome": "Sabrina Paiva", "idade": 23, "cpf": "234.112.223-34", "renda": 2400.00, "estado_civil": "Solteira" },
-  { "nome": "Roberto Carlos", "idade": 50, "cpf": "345.223.334-45", "renda": 11500.00, "estado_civil": "Casado" },
-  { "nome": "Leticia Spiller", "idade": 27, "cpf": "456.334.445-56", "renda": 3100.50, "estado_civil": "Solteira" },
-  { "nome": "Fabricio Queiroz", "idade": 34, "cpf": "567.445.556-67", "renda": 5800.00, "estado_civil": "Casado" },
-  { "nome": "Gisele Bundchen", "idade": 39, "cpf": "678.556.667-78", "renda": 15000.00, "estado_civil": "Casada" },
-  { "nome": "Mauricio Mattar", "idade": 41, "cpf": "789.667.778-89", "renda": 8200.00, "estado_civil": "Divorciado" },
-  { "nome": "Heloisa Perisse", "idade": 36, "cpf": "890.778.889-90", "renda": 6400.00, "estado_civil": "Casada" },
-  { "nome": "Caio Castro", "idade": 28, "cpf": "901.889.990-01", "renda": 4200.00, "estado_civil": "Solteiro" },
-  { "nome": "Paolla Oliveira", "idade": 32, "cpf": "012.990.001-12", "renda": 7100.00, "estado_civil": "Solteira" },
-  { "nome": "Mateus Solano", "idade": 37, "cpf": "121.002.112-21", "renda": 7900.00, "estado_civil": "Casado" },
-  { "nome": "Flavia Alessandra", "idade": 43, "cpf": "232.113.223-32", "renda": 9300.00, "estado_civil": "Casada" },
-  { "nome": "Murilo Benicio", "idade": 44, "cpf": "343.224.334-43", "renda": 8800.00, "estado_civil": "Divorciado" },
-  { "nome": "Giovanna Antonelli", "idade": 40, "cpf": "454.335.445-54", "renda": 9600.00, "estado_civil": "Casada" },
-  { "nome": "Reynaldo Gianecchini", "idade": 46, "cpf": "565.446.556-65", "renda": 10500.00, "estado_civil": "Solteiro" },
-  { "nome": "Mariana Ximenes", "idade": 35, "cpf": "676.557.667-76", "renda": 6800.00, "estado_civil": "Solteira" },
-  { "nome": "Cauã Reymond", "idade": 33, "cpf": "787.668.778-87", "renda": 7400.00, "estado_civil": "Divorciado" },
-  { "nome": "Alinne Moraes", "idade": 31, "cpf": "898.779.889-98", "renda": 5900.00, "estado_civil": "Casada" },
-  { "nome": "Lazaro Ramos", "idade": 42, "cpf": "909.880.990-09", "renda": 8500.00, "estado_civil": "Casado" },
-  { "nome": "Tais Araujo", "idade": 38, "cpf": "010.991.001-10", "renda": 8900.00, "estado_civil": "Casada" },
-  { "nome": "Wagner Moura", "idade": 45, "cpf": "112.003.224-35", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Selton Mello", "idade": 47, "cpf": "223.114.335-46", "renda": 11000.00, "estado_civil": "Solteiro" },
-  { "nome": "Alice Braga", "idade": 34, "cpf": "334.225.446-57", "renda": 7200.00, "estado_civil": "Solteira" },
-  { "nome": "Rodrigo Santoro", "idade": 44, "cpf": "445.336.557-68", "renda": 13000.00, "estado_civil": "Casado" },
-  { "nome": "Bruna Marquezine", "idade": 26, "cpf": "556.447.668-79", "renda": 4800.00, "estado_civil": "Solteira" },
-  { "nome": "Neymar Junior", "idade": 29, "cpf": "667.558.779-80", "renda": 25000.00, "estado_civil": "Solteiro" },
-  { "nome": "Marina Ruy Barbosa", "idade": 25, "cpf": "778.669.880-91", "renda": 6500.00, "estado_civil": "Casada" },
-  { "nome": "Chay Suede", "idade": 28, "cpf": "889.770.991-02", "renda": 5400.00, "estado_civil": "Casado" },
-  { "nome": "Deborah Secco", "idade": 40, "cpf": "990.881.002-13", "renda": 8100.00, "estado_civil": "Casada" },
-  { "nome": "Juliana Paes", "idade": 41, "cpf": "001.992.113-24", "renda": 9200.00, "estado_civil": "Casada" },
-  { "nome": "Emilio Dantas", "idade": 36, "cpf": "122.103.214-35", "renda": 6900.00, "estado_civil": "Casado" },
-  { "nome": "Isis Valverde", "idade": 32, "cpf": "233.214.325-46", "renda": 7700.00, "estado_civil": "Casada" },
-  { "nome": "Fernanda Montenegro", "idade": 90, "cpf": "344.325.436-57", "renda": 20000.00, "estado_civil": "Viúva" },
-  { "nome": "Lima Duarte", "idade": 91, "cpf": "455.436.547-68", "renda": 18000.00, "estado_civil": "Viúvo" },
-  { "nome": "Gloria Pires", "idade": 57, "cpf": "566.547.658-79", "renda": 12000.00, "estado_civil": "Casada" },
-  { "nome": "Tony Ramos", "idade": 72, "cpf": "677.658.769-80", "renda": 15000.00, "estado_civil": "Casado" },
-  { "nome": "Renata Vasconcellos", "idade": 48, "cpf": "788.769.870-91", "renda": 14000.00, "estado_civil": "Casada" },
-  { "nome": "William Bonner", "idade": 56, "cpf": "899.870.981-02", "renda": 16000.00, "estado_civil": "Casado" },
-  { "nome": "Evaristo Costa", "idade": 44, "cpf": "011.022.033-04", "renda": 9500.00, "estado_civil": "Casado" },
-  { "nome": "Sandra Annenberg", "idade": 52, "cpf": "122.133.144-15", "renda": 11000.00, "estado_civil": "Casada" },
-  { "nome": "Fatima Bernardes", "idade": 58, "cpf": "233.244.255-26", "renda": 13000.00, "estado_civil": "Solteira" },
-  { "nome": "Tiago Leifert", "idade": 40, "cpf": "344.355.366-37", "renda": 10000.00, "estado_civil": "Casado" },
-  { "nome": "Ana Maria Braga", "idade": 71, "cpf": "455.466.477-48", "renda": 20000.00, "estado_civil": "Solteira" },
-  { "nome": "Luciano Huck", "idade": 49, "cpf": "566.577.588-59", "renda": 30000.00, "estado_civil": "Casado" },
-  { "nome": "Angelica Ksyvickis", "idade": 47, "cpf": "677.688.699-60", "renda": 25000.00, "estado_civil": "Casada" },
-  { "nome": "Fausto Silva", "idade": 70, "cpf": "788.799.700-71", "renda": 40000.00, "estado_civil": "Casado" },
-  { "nome": "Xuxa Meneghel", "idade": 57, "cpf": "899.800.811-82", "renda": 35000.00, "estado_civil": "Solteira" },
-  { "nome": "Eliana Michaelichen", "idade": 47, "cpf": "012.123.234-35", "renda": 22000.00, "estado_civil": "Casada" },
-  { "nome": "Rodrigo Faro", "idade": 47, "cpf": "123.234.345-46", "renda": 21000.00, "estado_civil": "Casado" },
-  { "nome": "Marcos Mion", "idade": 41, "cpf": "234.345.456-57", "renda": 18000.00, "estado_civil": "Casado" },
-  { "nome": "Sabrina Sato", "idade": 39, "cpf": "345.456.567-68", "renda": 19000.00, "estado_civil": "Solteira" },
-  { "nome": "Ivete Sangalo", "idade": 48, "cpf": "456.567.678-79", "renda": 30000.00, "estado_civil": "Casada" },
-  { "nome": "Claudia Leitte", "idade": 40, "cpf": "567.678.789-80", "renda": 15000.00, "estado_civil": "Casada" },
-  { "nome": "Anitta Machado", "idade": 27, "cpf": "678.789.890-91", "renda": 50000.00, "estado_civil": "Solteira" },
-  { "nome": "Luan Santana", "idade": 29, "cpf": "789.890.901-02", "renda": 25000.00, "estado_civil": "Solteiro" },
-  { "nome": "Gusttavo Lima", "idade": 31, "cpf": "890.901.012-13", "renda": 28000.00, "estado_civil": "Casado" },
-  { "nome": "Marilia Mendonça", "idade": 25, "cpf": "901.012.123-24", "renda": 32000.00, "estado_civil": "Solteira" },
-  { "nome": "Wesley Safadão", "idade": 32, "cpf": "012.123.234-45", "renda": 27000.00, "estado_civil": "Casado" },
-  { "nome": "Daniel Camargo", "idade": 52, "cpf": "123.234.345-56", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Leonardo Costa", "idade": 57, "cpf": "234.345.456-67", "renda": 14000.00, "estado_civil": "Casado" },
-  { "nome": "Zeze Di Camargo", "idade": 58, "cpf": "345.456.567-78", "renda": 16000.00, "estado_civil": "Casado" },
-  { "nome": "Luciano Camargo", "idade": 47, "cpf": "456.567.678-89", "renda": 15000.00, "estado_civil": "Casado" },
-  { "nome": "Chitãozinho Lima", "idade": 66, "cpf": "567.678.789-90", "renda": 17000.00, "estado_civil": "Casado" },
-  { "nome": "Xororó Lima", "idade": 63, "cpf": "678.789.890-01", "renda": 17000.00, "estado_civil": "Casado" },
-  { "nome": "Sandy Leah", "idade": 37, "cpf": "789.890.901-12", "renda": 12000.00, "estado_civil": "Casada" },
-  { "nome": "Junior Lima", "idade": 36, "cpf": "890.901.012-23", "renda": 11000.00, "estado_civil": "Casado" },
-  { "nome": "Iza Pesadão", "idade": 30, "cpf": "901.012.123-34", "renda": 9000.00, "estado_civil": "Casada" },
-  { "nome": "Ludmilla Oliveira", "idade": 25, "cpf": "012.234.345-45", "renda": 15000.00, "estado_civil": "Casada" },
-  { "nome": "Pabllo Vittar", "idade": 26, "cpf": "123.345.456-56", "renda": 18000.00, "estado_civil": "Solteira" },
-  { "nome": "Luisa Sonza", "idade": 22, "cpf": "234.456.567-67", "renda": 14000.00, "estado_civil": "Solteira" },
-  { "nome": "Vitão Carvalho", "idade": 21, "cpf": "345.567.678-78", "renda": 7000.00, "estado_civil": "Solteiro" },
-  { "nome": "Kevinho K", "idade": 22, "cpf": "456.678.789-89", "renda": 12000.00, "estado_civil": "Solteiro" },
-  { "nome": "MC Guimê", "idade": 28, "cpf": "567.789.890-90", "renda": 8000.00, "estado_civil": "Casado" },
-  { "nome": "Lexa Sapequinha", "idade": 25, "cpf": "678.890.901-01", "renda": 9000.00, "estado_civil": "Casada" },
-  { "nome": "Joelma Mendes", "idade": 46, "cpf": "789.901.012-12", "renda": 11000.00, "estado_civil": "Solteira" },
-  { "nome": "Gaby Amarantos", "idade": 42, "cpf": "890.012.123-23", "renda": 9500.00, "estado_civil": "Casada" },
-  { "nome": "Fafá de Belém", "idade": 64, "cpf": "901.123.234-34", "renda": 13000.00, "estado_civil": "Solteira" },
-  { "nome": "Dinho Ouro Preto", "idade": 56, "cpf": "012.345.678-90", "renda": 15000.00, "estado_civil": "Casado" },
-  { "nome": "Herbert Vianna", "idade": 59, "cpf": "123.456.789-11", "renda": 14000.00, "estado_civil": "Casado" },
-  { "nome": "Samuel Rosa", "idade": 54, "cpf": "234.567.890-22", "renda": 16000.00, "estado_civil": "Casado" },
-  { "nome": "Rogério Flausino", "idade": 48, "cpf": "345.678.901-33", "renda": 15500.00, "estado_civil": "Casado" },
-  { "nome": "Paulo Ricardo", "idade": 58, "cpf": "456.789.012-44", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Lulu Santos", "idade": 67, "cpf": "567.890.123-55", "renda": 25000.00, "estado_civil": "Casado" },
-  { "nome": "Djavan Caetano", "idade": 71, "cpf": "678.901.234-66", "renda": 22000.00, "estado_civil": "Casado" },
-  { "nome": "Gilberto Gil", "idade": 78, "cpf": "789.012.345-77", "renda": 30000.00, "estado_civil": "Casado" },
-  { "nome": "Caetano Veloso", "idade": 78, "cpf": "890.123.456-88", "renda": 30000.00, "estado_civil": "Casado" },
-  { "nome": "Milton Nascimento", "idade": 78, "cpf": "901.234.567-99", "renda": 28000.00, "estado_civil": "Solteiro" },
-  { "nome": "Maria Bethânia", "idade": 74, "cpf": "012.345.678-01", "renda": 25000.00, "estado_civil": "Solteira" },
-  { "nome": "Gal Costa", "idade": 75, "cpf": "123.456.789-12", "renda": 24000.00, "estado_civil": "Solteira" },
-  { "nome": "Rita Lee", "idade": 72, "cpf": "234.567.890-23", "renda": 26000.00, "estado_civil": "Casada" },
-  { "nome": "Ney Matogrosso", "idade": 79, "cpf": "345.678.901-34", "renda": 22000.00, "estado_civil": "Solteiro" },
-  { "nome": "Arnaldo Antunes", "idade": 60, "cpf": "456.789.012-45", "renda": 13000.00, "estado_civil": "Casado" },
-  { "nome": "Marisa Monte", "idade": 53, "cpf": "567.890.123-56", "renda": 18000.00, "estado_civil": "Casada" },
-  { "nome": "Adriana Calcanhotto", "idade": 55, "cpf": "678.901.234-67", "renda": 14000.00, "estado_civil": "Solteira" },
-  { "nome": "Zeca Pagodinho", "idade": 61, "cpf": "789.012.345-78", "renda": 25000.00, "estado_civil": "Casado" },
-  { "nome": "Martinho da Vila", "idade": 82, "cpf": "890.123.456-89", "renda": 20000.00, "estado_civil": "Casado" },
-  { "nome": "Jorge Aragão", "idade": 71, "cpf": "901.234.567-00", "renda": 16000.00, "estado_civil": "Casado" },
-  { "nome": "Péricles Faria", "idade": 51, "cpf": "011.223.334-45", "renda": 18000.00, "estado_civil": "Casado" },
-  { "nome": "Thiaguinho Barbosa", "idade": 37, "cpf": "122.334.445-56", "renda": 22000.00, "estado_civil": "Solteiro" },
-  { "nome": "Belo Pires", "idade": 46, "cpf": "233.445.556-67", "renda": 15000.00, "estado_civil": "Casado" },
-  { "nome": "Ferrugem Souza", "idade": 32, "cpf": "344.556.667-78", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Dilsinho Silva", "idade": 28, "cpf": "455.667.778-89", "renda": 11000.00, "estado_civil": "Casado" },
-  { "nome": "Mumuzinho Batista", "idade": 36, "cpf": "566.778.889-90", "renda": 10000.00, "estado_civil": "Casado" },
-  { "nome": "Alexandre Pires", "idade": 45, "cpf": "677.889.990-01", "renda": 19000.00, "estado_civil": "Casado" },
-  { "nome": "Sorocaba Lima", "idade": 40, "cpf": "788.990.001-12", "renda": 17000.00, "estado_civil": "Casado" },
-  { "nome": "Fernando Zor", "idade": 36, "cpf": "899.001.112-23", "renda": 14000.00, "estado_civil": "Solteiro" },
-  { "nome": "Maiara Maraisa", "idade": 32, "cpf": "900.112.223-34", "renda": 25000.00, "estado_civil": "Solteira" },
-  { "nome": "Simaria Mendes", "idade": 38, "cpf": "011.223.344-55", "renda": 20000.00, "estado_civil": "Solteira" },
-  { "nome": "Simone Mendes", "idade": 36, "cpf": "122.334.455-66", "renda": 22000.00, "estado_civil": "Casada" },
-  { "nome": "Naiara Azevedo", "idade": 31, "cpf": "233.445.566-77", "renda": 13000.00, "estado_civil": "Casada" },
-  { "nome": "Paula Fernandes", "idade": 36, "cpf": "344.556.677-88", "renda": 11000.00, "estado_civil": "Solteira" },
-  { "nome": "Michel Teló", "idade": 39, "cpf": "455.667.788-99", "renda": 18000.00, "estado_civil": "Casado" },
-  { "nome": "Thais Fersoza", "idade": 36, "cpf": "566.778.899-00", "renda": 12000.00, "estado_civil": "Casada" },
-  { "nome": "Grazi Massafera", "idade": 38, "cpf": "677.889.900-11", "renda": 15000.00, "estado_civil": "Solteira" },
-  { "nome": "Rômulo Estrela", "idade": 36, "cpf": "788.990.011-22", "renda": 9000.00, "estado_civil": "Casado" },
-  { "nome": "Chay Suede", "idade": 28, "cpf": "899.001.122-33", "renda": 11000.00, "estado_civil": "Casado" },
-  { "nome": "Laura Neiva", "idade": 27, "cpf": "900.112.233-44", "renda": 8500.00, "estado_civil": "Casada" },
-  { "nome": "Bruna Linzmeyer", "idade": 28, "cpf": "011.233.445-66", "renda": 7800.00, "estado_civil": "Solteira" },
-  { "nome": "Johnny Massaro", "idade": 28, "cpf": "122.344.556-77", "renda": 7200.00, "estado_civil": "Solteiro" },
-  { "nome": "Tatá Werneck", "idade": 37, "cpf": "233.455.667-88", "renda": 19000.00, "estado_civil": "Casada" },
-  { "nome": "Rafael Vitti", "idade": 25, "cpf": "344.566.778-99", "renda": 8000.00, "estado_civil": "Casado" },
-  { "nome": "Ingrid Guimarães", "idade": 48, "cpf": "455.677.889-00", "renda": 14000.00, "estado_civil": "Casada" },
-  { "nome": "Paulo Gustavo", "idade": 42, "cpf": "566.788.990-11", "renda": 25000.00, "estado_civil": "Casado" },
-  { "nome": "Monica Martelli", "idade": 52, "cpf": "677.899.001-22", "renda": 13000.00, "estado_civil": "Divorciada" },
-  { "nome": "Preta Gil", "idade": 46, "cpf": "788.900.112-33", "renda": 16000.00, "estado_civil": "Casada" },
-  { "nome": "Carolina Dieckmann", "idade": 42, "cpf": "899.011.223-44", "renda": 11000.00, "estado_civil": "Casada" },
-  { "nome": "Selton Mello", "idade": 47, "cpf": "900.122.334-55", "renda": 15000.00, "estado_civil": "Solteiro" },
-  { "nome": "Dan Stulbach", "idade": 51, "cpf": "012.345.678-02", "renda": 12500.00, "estado_civil": "Casado" },
-  { "nome": "Caco Ciocler", "idade": 49, "cpf": "123.456.789-03", "renda": 11000.00, "estado_civil": "Casado" },
-  { "nome": "Maria Fernanda Cândido", "idade": 46, "cpf": "234.567.890-04", "renda": 14000.00, "estado_civil": "Casada" },
-  { "nome": "Edson Celulari", "idade": 62, "cpf": "345.678.901-05", "renda": 13500.00, "estado_civil": "Casado" },
-  { "nome": "Claudia Raia", "idade": 53, "cpf": "456.789.012-06", "renda": 16000.00, "estado_civil": "Casada" },
-  { "nome": "Jarbas Homem de Mello", "idade": 51, "cpf": "567.890.123-07", "renda": 10000.00, "estado_civil": "Casado" },
-  { "nome": "Miguel Falabella", "idade": 64, "cpf": "678.901.234-08", "renda": 22000.00, "estado_civil": "Solteiro" },
-  { "nome": "Marisa Orth", "idade": 57, "cpf": "789.012.345-09", "renda": 14000.00, "estado_civil": "Casada" },
-  { "nome": "Luiz Fernando Guimarães", "idade": 71, "cpf": "890.123.456-10", "renda": 13000.00, "estado_civil": "Casado" },
-  { "nome": "Fernanda Torres", "idade": 55, "cpf": "901.234.567-11", "renda": 17000.00, "estado_civil": "Casada" },
-  { "nome": "Andréa Beltrão", "idade": 57, "cpf": "012.456.789-12", "renda": 15000.00, "estado_civil": "Casada" },
-  { "nome": "Marieta Severo", "idade": 74, "cpf": "123.567.890-13", "renda": 18000.00, "estado_civil": "Divorciada" },
-  { "nome": "Marco Nanini", "idade": 72, "cpf": "234.678.901-14", "renda": 19000.00, "estado_civil": "Solteiro" },
-  { "nome": "Guta Stresser", "idade": 48, "cpf": "345.789.012-15", "renda": 8500.00, "estado_civil": "Casada" },
-  { "nome": "Pedro Cardoso", "idade": 58, "cpf": "456.890.123-16", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Lázaro Ramos", "idade": 42, "cpf": "567.901.234-17", "renda": 16000.00, "estado_civil": "Casado" },
-  { "nome": "Taís Araújo", "idade": 42, "cpf": "678.012.345-18", "renda": 16000.00, "estado_civil": "Casada" },
-  { "nome": "Fabrício Boliveira", "idade": 38, "cpf": "789.123.456-19", "renda": 9500.00, "estado_civil": "Solteiro" },
-  { "nome": "Ícaro Silva", "idade": 33, "cpf": "890.234.567-20", "renda": 8800.00, "estado_civil": "Solteiro" },
-  { "nome": "Zezé Motta", "idade": 76, "cpf": "901.345.678-21", "renda": 11000.00, "estado_civil": "Viúva" },
-  { "nome": "Milton Gonçalves", "idade": 87, "cpf": "012.567.890-22", "renda": 14000.00, "estado_civil": "Viúvo" },
-  { "nome": "Sheron Menezzes", "idade": 37, "cpf": "123.678.901-23", "renda": 10500.00, "estado_civil": "Casada" },
-  { "nome": "Camila Pitanga", "idade": 43, "cpf": "234.789.012-24", "renda": 13000.00, "estado_civil": "Solteira" },
-  { "nome": "Antônio Pitanga", "idade": 81, "cpf": "345.890.123-25", "renda": 12000.00, "estado_civil": "Casado" },
-  { "nome": "Rocco Pitanga", "idade": 40, "cpf": "456.901.234-26", "renda": 8000.00, "estado_civil": "Solteiro" },
-  { "nome": "Cris Vianna", "idade": 43, "cpf": "567.012.345-27", "renda": 9200.00, "estado_civil": "Solteira" },
-  { "nome": "Erika Januza", "idade": 35, "cpf": "678.123.456-28", "renda": 8700.00, "estado_civil": "Casada" },
-  { "nome": "Juliana Alves", "idade": 38, "cpf": "789.234.567-29", "renda": 9800.00, "estado_civil": "Casada" },
-  { "nome": "Lucy Ramos", "idade": 38, "cpf": "890.345.678-30", "renda": 8900.00, "estado_civil": "Casada" },
-  { "nome": "Pathy Dejesus", "idade": 43, "cpf": "901.456.789-31", "renda": 10200.00, "estado_civil": "Solteira" },
-  { "nome": "Darlan Cunha", "idade": 32, "cpf": "012.678.901-32", "renda": 6500.00, "estado_civil": "Casado" },
-  { "nome": "Douglas Silva", "idade": 32, "cpf": "123.789.012-33", "renda": 7800.00, "estado_civil": "Casado" },
-  { "nome": "Roberta Rodrigues", "idade": 38, "cpf": "234.890.123-34", "renda": 8200.00, "estado_civil": "Casada" },
-  { "nome": "Babu Santana", "idade": 41, "cpf": "345.901.234-35", "renda": 11000.00, "estado_civil": "Casado" },
-  { "nome": "Thelma Assis", "idade": 36, "cpf": "456.012.345-36", "renda": 15000.00, "estado_civil": "Casada" },
-  { "nome": "Gleici Damasceno", "idade": 25, "cpf": "567.123.456-37", "renda": 9000.00, "estado_civil": "Solteira" },
-  { "nome": "Kaysar Dadour", "idade": 31, "cpf": "678.234.567-38", "renda": 8500.00, "estado_civil": "Solteiro" }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
+            authDomain: "nova-96b06.firebaseapp.com",
+            projectId: "nova-96b06",
+            appId: "1:166967553772:web:475370390f719953afbfc9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- BANCO DE DADOS LOCAL ---
+        const CLIENTE = [
+            { nome: "Pablo Soares", cargo: "Desenvolvedor", empresa: "ENIAC", contato: "pablo@email.com" },
+            { nome: "Ana Costa", cargo: "Gerente", empresa: "J&J Projects", contato: "ana.c@empresa.com" }
         ];
 
-        // Dados do arquivo situacao.json
-        const situacoes = [
-    { "nome": "João Silva", "status_divida": "Negativado", "valor_pendente": 1500.75, "limite_disponivel": 200.00, "score_credito": 350 },
-  { "nome": "Maria Oliveira", "status_divida": "Atraso", "valor_pendente": 450.20, "limite_disponivel": 1500.00, "score_credito": 580 },
-  { "nome": "Carlos Souza", "status_divida": "Negativado", "valor_pendente": 8900.00, "limite_disponivel": 0.00, "score_credito": 120 },
-  { "nome": "Ana Santos", "status_divida": "Acordo", "valor_pendente": 1200.50, "limite_disponivel": 500.00, "score_credito": 450 },
-  { "nome": "Pedro Lima", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 50.00, "score_credito": 210 },
-  { "nome": "Fernanda Costa", "status_divida": "Atraso", "valor_pendente": 210.15, "limite_disponivel": 8000.00, "score_credito": 720 },
-  { "nome": "Bruno Rocha", "status_divida": "Negativado", "valor_pendente": 15200.00, "limite_disponivel": 0.00, "score_credito": 95 },
-  { "nome": "Juliana Alves", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 1200.00, "score_credito": 540 },
-  { "nome": "Ricardo Pereira", "status_divida": "Acordo", "valor_pendente": 5600.80, "limite_disponivel": 300.00, "score_credito": 410 },
-  { "nome": "Patricia Gomes", "status_divida": "Negativado", "valor_pendente": 950.00, "limite_disponivel": 150.00, "score_credito": 380 },
-  { "nome": "Lucas Martins", "status_divida": "Atraso", "valor_pendente": 4200.00, "limite_disponivel": 2500.00, "score_credito": 610 },
-  { "nome": "Camila Ribeiro", "status_divida": "Negativado", "valor_pendente": 730.40, "limite_disponivel": 0.00, "score_credito": 290 },
-  { "nome": "Gustavo Carvalho", "status_divida": "Acordo", "valor_pendente": 12400.00, "limite_disponivel": 5000.00, "score_credito": 500 },
-  { "nome": "Aline Barros", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 4500.00, "score_credito": 680 },
-  { "nome": "Eduardo Melo", "status_divida": "Negativado", "valor_pendente": 22100.50, "limite_disponivel": 0.00, "score_credito": 140 },
-  { "nome": "Larissa Freitas", "status_divida": "Atraso", "valor_pendente": 180.00, "limite_disponivel": 1100.00, "score_credito": 590 },
-  { "nome": "Rafael Batista", "status_divida": "Acordo", "valor_pendente": 4500.00, "limite_disponivel": 2000.00, "score_credito": 480 },
-  { "nome": "Beatriz Nunes", "status_divida": "Negativado", "valor_pendente": 8200.00, "limite_disponivel": 0.00, "score_credito": 220 },
-  { "nome": "Felipe Teixeira", "status_divida": "Atraso", "valor_pendente": 650.00, "limite_disponivel": 1800.00, "score_credito": 630 },
-  { "nome": "Renata Lopes", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 4000.00, "score_credito": 710 },
-  { "nome": "Diego Fernandes", "status_divida": "Negativado", "valor_pendente": 35000.00, "limite_disponivel": 0.00, "score_credito": 105 },
-  { "nome": "Vanessa Moreira", "status_divida": "Atraso", "valor_pendente": 940.00, "limite_disponivel": 1500.00, "score_credito": 520 },
-  { "nome": "Thiago Cardoso", "status_divida": "Acordo", "valor_pendente": 2800.00, "limite_disponivel": 3200.00, "score_credito": 600 },
-  { "nome": "Priscila Duarte", "status_divida": "Negativado", "valor_pendente": 4100.50, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "André Araujo", "status_divida": "Atraso", "valor_pendente": 12500.00, "limite_disponivel": 6000.00, "score_credito": 490 },
-  { "nome": "Simone Farias", "status_divida": "Acordo", "valor_pendente": 800.00, "limite_disponivel": 2500.00, "score_credito": 640 },
-  { "nome": "Marcelo Pires", "status_divida": "Negativado", "valor_pendente": 6700.00, "limite_disponivel": 100.00, "score_credito": 275 },
-  { "nome": "Tatiane Moura", "status_divida": "Atraso", "valor_pendente": 350.00, "limite_disponivel": 1400.00, "score_credito": 560 },
-  { "nome": "Leonardo Cunha", "status_divida": "Acordo", "valor_pendente": 9200.00, "limite_disponivel": 4500.00, "score_credito": 530 },
-  { "nome": "Carla Peixoto", "status_divida": "Negativado", "valor_pendente": 1100.25, "limite_disponivel": 0.00, "score_credito": 390 },
-  { "nome": "Rodrigo Braga", "status_divida": "Atraso", "valor_pendente": 4800.00, "limite_disponivel": 2100.00, "score_credito": 470 },
-  { "nome": "Julio Cesar", "status_divida": "Negativado", "valor_pendente": 19000.00, "limite_disponivel": 0.00, "score_credito": 115 },
-  { "nome": "Paula Matos", "status_divida": "Acordo", "valor_pendente": 2300.00, "limite_disponivel": 1800.00, "score_credito": 590 },
-  { "nome": "Vinicius Reis", "status_divida": "Atraso", "valor_pendente": 1450.00, "limite_disponivel": 900.00, "score_credito": 410 },
-  { "nome": "Monica Torres", "status_divida": "Negativado", "valor_pendente": 6200.00, "limite_disponivel": 100.00, "score_credito": 305 },
-  { "nome": "Igor Santana", "status_divida": "Atraso", "valor_pendente": 520.00, "limite_disponivel": 1100.00, "score_credito": 535 },
-  { "nome": "Cintia Guedes", "status_divida": "Acordo", "valor_pendente": 3400.00, "limite_disponivel": 5000.00, "score_credito": 670 },
-  { "nome": "Alexandre Pinto", "status_divida": "Negativado", "valor_pendente": 14200.00, "limite_disponivel": 0.00, "score_credito": 180 },
-  { "nome": "Debora Tavares", "status_divida": "Atraso", "valor_pendente": 890.00, "limite_disponivel": 2000.00, "score_credito": 620 },
-  { "nome": "Sergio Queiroz", "status_divida": "Acordo", "valor_pendente": 11000.00, "limite_disponivel": 15000.00, "score_credito": 550 },
-  { "nome": "Elaine Castro", "status_divida": "Negativado", "valor_pendente": 4100.00, "limite_disponivel": 0.00, "score_credito": 295 },
-  { "nome": "Otavio Rezende", "status_divida": "Atraso", "valor_pendente": 2300.70, "limite_disponivel": 3800.00, "score_credito": 540 },
-  { "nome": "Raquel Mendes", "status_divida": "Acordo", "valor_pendente": 150.00, "limite_disponivel": 1200.00, "score_credito": 780 },
-  { "nome": "Hugo Sales", "status_divida": "Negativado", "valor_pendente": 12800.00, "limite_disponivel": 0.00, "score_credito": 190 },
-  { "nome": "Claudia Borges", "status_divida": "Atraso", "valor_pendente": 3100.00, "limite_disponivel": 2500.00, "score_credito": 450 },
-  { "nome": "Danilo Freire", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 6000.00, "score_credito": 820 },
-  { "nome": "Viviane Andrade", "status_divida": "Negativado", "valor_pendente": 2400.00, "limite_disponivel": 0.00, "score_credito": 310 },
-  { "nome": "Leandro Viana", "status_divida": "Atraso", "valor_pendente": 9500.00, "limite_disponivel": 1000.00, "score_credito": 400 },
-  { "nome": "Cristiane Lopes", "status_divida": "Acordo", "valor_pendente": 2100.00, "limite_disponivel": 4500.00, "score_credito": 740 },
-  { "nome": "Marcos Vieira", "status_divida": "Negativado", "valor_pendente": 45000.00, "limite_disponivel": 0.00, "score_credito": 85 },
-  { "nome": "Sabrina Paiva", "status_divida": "Atraso", "valor_pendente": 420.00, "limite_disponivel": 1500.00, "score_credito": 615 },
-  { "nome": "Roberto Carlos", "status_divida": "Acordo", "valor_pendente": 15000.00, "limite_disponivel": 25000.00, "score_credito": 520 },
-  { "nome": "Leticia Spiller", "status_divida": "Negativado", "valor_pendente": 2300.00, "limite_disponivel": 0.00, "score_credito": 340 },
-  { "nome": "Fabricio Queiroz", "status_divida": "Atraso", "valor_pendente": 8100.00, "limite_disponivel": 2000.00, "score_credito": 420 },
-  { "nome": "Gisele Bundchen", "status_divida": "Acordo", "valor_pendente": 5000.00, "limite_disponivel": 150000.00, "score_credito": 890 },
-  { "nome": "Mauricio Mattar", "status_divida": "Negativado", "valor_pendente": 12000.00, "limite_disponivel": 500.00, "score_credito": 260 },
-  { "nome": "Heloisa Perisse", "status_divida": "Atraso", "valor_pendente": 3400.00, "limite_disponivel": 6000.00, "score_credito": 510 },
-  { "nome": "Caio Castro", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 12000.00, "score_credito": 780 },
-  { "nome": "Paolla Oliveira", "status_divida": "Negativado", "valor_pendente": 6700.00, "limite_disponivel": 0.00, "score_credito": 310 },
-  { "nome": "Mateus Solano", "status_divida": "Atraso", "valor_pendente": 4100.00, "limite_disponivel": 10000.00, "score_credito": 650 },
-  { "nome": "Flavia Alessandra", "status_divida": "Acordo", "valor_pendente": 2200.00, "limite_disponivel": 15000.00, "score_credito": 720 },
-  { "nome": "Murilo Benicio", "status_divida": "Negativado", "valor_pendente": 18400.00, "limite_disponivel": 0.00, "score_credito": 195 },
-  { "nome": "Giovanna Antonelli", "status_divida": "Atraso", "valor_pendente": 5600.00, "limite_disponivel": 8000.00, "score_credito": 540 },
-  { "nome": "Reynaldo Gianecchini", "status_divida": "Acordo", "valor_pendente": 9000.00, "limite_disponivel": 12000.00, "score_credito": 610 },
-  { "nome": "Mariana Ximenes", "status_divida": "Negativado", "valor_pendente": 3200.00, "limite_disponivel": 100.00, "score_credito": 340 },
-  { "nome": "Cauã Reymond", "status_divida": "Atraso", "valor_pendente": 1500.00, "limite_disponivel": 9000.00, "score_credito": 690 },
-  { "nome": "Alinne Moraes", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 11000.00, "score_credito": 810 },
-  { "nome": "Lazaro Ramos", "status_divida": "Negativado", "valor_pendente": 7800.00, "limite_disponivel": 0.00, "score_credito": 280 },
-  { "nome": "Tais Araujo", "status_divida": "Atraso", "valor_pendente": 2300.00, "limite_disponivel": 15000.00, "score_credito": 740 },
-  { "nome": "Wagner Moura", "status_divida": "Acordo", "valor_pendente": 11000.00, "limite_disponivel": 25000.00, "score_credito": 630 },
-  { "nome": "Selton Mello", "status_divida": "Negativado", "valor_pendente": 14000.00, "limite_disponivel": 0.00, "score_credito": 210 },
-  { "nome": "Alice Braga", "status_divida": "Atraso", "valor_pendente": 920.00, "limite_disponivel": 8500.00, "score_credito": 660 },
-  { "nome": "Rodrigo Santoro", "status_divida": "Acordo", "valor_pendente": 6700.00, "limite_disponivel": 35000.00, "score_credito": 785 },
-  { "nome": "Bruna Marquezine", "status_divida": "Negativado", "valor_pendente": 5200.00, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "Neymar Junior", "status_divida": "Atraso", "valor_pendente": 150000.00, "limite_disponivel": 1000000.00, "score_credito": 550 },
-  { "nome": "Marina Ruy Barbosa", "status_divida": "Acordo", "valor_pendente": 2100.00, "limite_disponivel": 45000.00, "score_credito": 895 },
-  { "nome": "Chay Suede", "status_divida": "Negativado", "valor_pendente": 890.00, "limite_disponivel": 200.00, "score_credito": 405 },
-  { "nome": "Deborah Secco", "status_divida": "Atraso", "valor_pendente": 4500.00, "limite_disponivel": 12000.00, "score_credito": 610 },
-  { "nome": "Juliana Paes", "status_divida": "Acordo", "valor_pendente": 3200.00, "limite_disponivel": 18000.00, "score_credito": 720 },
-  { "nome": "Emilio Dantas", "status_divida": "Negativado", "valor_pendente": 12400.00, "limite_disponivel": 0.00, "score_credito": 190 },
-  { "nome": "Isis Valverde", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 14000.00, "score_credito": 680 },
-  { "nome": "Fernanda Montenegro", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 200000.00, "score_credito": 950 },
-  { "nome": "Lima Duarte", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 5000.00, "score_credito": 520 },
-  { "nome": "Gloria Pires", "status_divida": "Atraso", "valor_pendente": 6700.00, "limite_disponivel": 25000.00, "score_credito": 630 },
-  { "nome": "Tony Ramos", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 80000.00, "score_credito": 880 },
-  { "nome": "Renata Vasconcellos", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 10000.00, "score_credito": 440 },
-  { "nome": "William Bonner", "status_divida": "Atraso", "valor_pendente": 8900.00, "limite_disponivel": 35000.00, "score_credito": 615 },
-  { "nome": "Evaristo Costa", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 22000.00, "score_credito": 820 },
-  { "nome": "Sandra Annenberg", "status_divida": "Negativado", "valor_pendente": 5600.00, "limite_disponivel": 0.00, "score_credito": 310 },
-  { "nome": "Fatima Bernardes", "status_divida": "Atraso", "valor_pendente": 1200.00, "limite_disponivel": 40000.00, "score_credito": 740 },
-  { "nome": "Tiago Leifert", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 25000.00, "score_credito": 815 },
-  { "nome": "Ana Maria Braga", "status_divida": "Negativado", "valor_pendente": 25000.00, "limite_disponivel": 50000.00, "score_credito": 420 },
-  { "nome": "Luciano Huck", "status_divida": "Atraso", "valor_pendente": 12000.00, "limite_disponivel": 500000.00, "score_credito": 880 },
-  { "nome": "Angelica Ksyvickis", "status_divida": "Acordo", "valor_pendente": 3200.00, "limite_disponivel": 300000.00, "score_credito": 910 },
-  { "nome": "Fausto Silva", "status_divida": "Negativado", "valor_pendente": 85000.00, "limite_disponivel": 0.00, "score_credito": 150 },
-  { "nome": "Xuxa Meneghel", "status_divida": "Atraso", "valor_pendente": 1400.00, "limite_disponivel": 400000.00, "score_credito": 840 },
-  { "nome": "Eliana Michaelichen", "status_divida": "Acordo", "valor_pendente": 6700.00, "limite_disponivel": 120000.00, "score_credito": 770 },
-  { "nome": "Rodrigo Faro", "status_divida": "Negativado", "valor_pendente": 22000.00, "limite_disponivel": 0.00, "score_credito": 305 },
-  { "nome": "Marcos Mion", "status_divida": "Atraso", "valor_pendente": 3100.00, "limite_disponivel": 50000.00, "score_credito": 720 },
-  { "nome": "Sabrina Sato", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 80000.00, "score_credito": 855 },
-  { "nome": "Ivete Sangalo", "status_divida": "Negativado", "valor_pendente": 12000.00, "limite_disponivel": 100000.00, "score_credito": 610 },
-  { "nome": "Claudia Leitte", "status_divida": "Atraso", "valor_pendente": 5400.00, "limite_disponivel": 60000.00, "score_credito": 640 },
-  { "nome": "Anitta Machado", "status_divida": "Acordo", "valor_pendente": 95000.00, "limite_disponivel": 500000.00, "score_credito": 710 },
-  { "nome": "Luan Santana", "status_divida": "Negativado", "valor_pendente": 32000.00, "limite_disponivel": 0.00, "score_credito": 280 },
-  { "nome": "Gusttavo Lima", "status_divida": "Atraso", "valor_pendente": 8400.00, "limite_disponivel": 150000.00, "score_credito": 730 },
-  { "nome": "Marilia Mendonça", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 80000.00, "score_credito": 920 },
-  { "nome": "Wesley Safadão", "status_divida": "Negativado", "valor_pendente": 45000.00, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "Daniel Camargo", "status_divida": "Atraso", "valor_pendente": 2100.00, "limite_disponivel": 35000.00, "score_credito": 680 },
-  { "nome": "Leonardo Costa", "status_divida": "Acordo", "valor_pendente": 670.00, "limite_disponivel": 42000.00, "score_credito": 840 },
-  { "nome": "Zeze Di Camargo", "status_divida": "Negativado", "valor_pendente": 18000.00, "limite_disponivel": 5000.00, "score_credito": 410 },
-  { "nome": "Luciano Camargo", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 28000.00, "score_credito": 625 },
-  { "nome": "Chitãozinho Lima", "status_divida": "Acordo", "valor_pendente": 900.00, "limite_disponivel": 55000.00, "score_credito": 890 },
-  { "nome": "Xororó Lima", "status_divida": "Negativado", "valor_pendente": 1100.00, "limite_disponivel": 15000.00, "score_credito": 540 },
-  { "nome": "Sandy Leah", "status_divida": "Atraso", "valor_pendente": 450.00, "limite_disponivel": 32000.00, "score_credito": 790 },
-  { "nome": "Junior Lima", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 29000.00, "score_credito": 830 },
-  { "nome": "Iza Pesadão", "status_divida": "Negativado", "valor_pendente": 7600.00, "limite_disponivel": 0.00, "score_credito": 305 },
-  { "nome": "Ludmilla Oliveira", "status_divida": "Atraso", "valor_pendente": 12500.00, "limite_disponivel": 45000.00, "score_credito": 560 },
-  { "nome": "Pabllo Vittar", "status_divida": "Acordo", "valor_pendente": 5400.00, "limite_disponivel": 60000.00, "score_credito": 710 },
-  { "nome": "Luisa Sonza", "status_divida": "Negativado", "valor_pendente": 9200.00, "limite_disponivel": 0.00, "score_credito": 280 },
-  { "nome": "Vitão Carvalho", "status_divida": "Atraso", "valor_pendente": 2100.00, "limite_disponivel": 8000.00, "score_credito": 490 },
-  { "nome": "Kevinho K", "status_divida": "Acordo", "valor_pendente": 650.00, "limite_disponivel": 25000.00, "score_credito": 750 },
-  { "nome": "MC Guimê", "status_divida": "Negativado", "valor_pendente": 18000.00, "limite_disponivel": 0.00, "score_credito": 140 },
-  { "nome": "Lexa Sapequinha", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 15000.00, "score_credito": 615 },
-  { "nome": "Joelma Mendes", "status_divida": "Acordo", "valor_pendente": 4500.00, "limite_disponivel": 22000.00, "score_credito": 580 },
-  { "nome": "Gaby Amarantos", "status_divida": "Negativado", "valor_pendente": 920.00, "limite_disponivel": 500.00, "score_credito": 390 },
-  { "nome": "Fafá de Belém", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 30000.00, "score_credito": 760 },
-  { "nome": "Dinho Ouro Preto", "status_divida": "Acordo", "valor_pendente": 2300.00, "limite_disponivel": 45000.00, "score_credito": 820 },
-  { "nome": "Herbert Vianna", "status_divida": "Negativado", "valor_pendente": 5600.00, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "Samuel Rosa", "status_divida": "Atraso", "valor_pendente": 1200.00, "limite_disponivel": 48000.00, "score_credito": 710 },
-  { "nome": "Rogério Flausino", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 35000.00, "score_credito": 895 },
-  { "nome": "Paulo Ricardo", "status_divida": "Negativado", "valor_pendente": 14000.00, "limite_disponivel": 500.00, "score_credito": 220 },
-  { "nome": "Lulu Santos", "status_divida": "Atraso", "valor_pendente": 6700.00, "limite_disponivel": 90000.00, "score_credito": 680 },
-  { "nome": "Djavan Caetano", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 120000.00, "score_credito": 940 },
-  { "nome": "Gilberto Gil", "status_divida": "Negativado", "valor_pendente": 3200.00, "limite_disponivel": 20000.00, "score_credito": 510 },
-  { "nome": "Caetano Veloso", "status_divida": "Atraso", "valor_pendente": 9500.00, "limite_disponivel": 85000.00, "score_credito": 640 },
-  { "nome": "Milton Nascimento", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 70000.00, "score_credito": 960 },
-  { "nome": "Maria Bethânia", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 10000.00, "score_credito": 420 },
-  { "nome": "Gal Costa", "status_divida": "Atraso", "valor_pendente": 4100.00, "limite_disponivel": 35000.00, "score_credito": 615 },
-  { "nome": "Rita Lee", "status_divida": "Acordo", "valor_pendente": 2200.00, "limite_disponivel": 50000.00, "score_credito": 880 },
-  { "nome": "Ney Matogrosso", "status_divida": "Negativado", "valor_pendente": 8900.00, "limite_disponivel": 0.00, "score_credito": 190 },
-  { "nome": "Arnaldo Antunes", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 15000.00, "score_credito": 720 },
-  { "nome": "Marisa Monte", "status_divida": "Acordo", "valor_pendente": 650.00, "limite_disponivel": 60000.00, "score_credito": 910 },
-  { "nome": "Adriana Calcanhotto", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 200.00, "score_credito": 315 },
-  { "nome": "Zeca Pagodinho", "status_divida": "Atraso", "valor_pendente": 12500.00, "limite_disponivel": 40000.00, "score_credito": 540 },
-  { "nome": "Martinho da Vila", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 80000.00, "score_credito": 860 },
-  { "nome": "Jorge Aragão", "status_divida": "Negativado", "valor_pendente": 6700.00, "limite_disponivel": 0.00, "score_credito": 205 },
-  { "nome": "Péricles Faria", "status_divida": "Atraso", "valor_pendente": 5200.00, "limite_disponivel": 25000.00, "score_credito": 610 },
-  { "nome": "Thiaguinho Barbosa", "status_divida": "Acordo", "valor_pendente": 3200.00, "limite_disponivel": 90000.00, "score_credito": 825 },
-  { "nome": "Belo Pires", "status_divida": "Negativado", "valor_pendente": 45000.00, "limite_disponivel": 0.00, "score_credito": 90 },
-  { "nome": "Ferrugem Souza", "status_divida": "Atraso", "valor_pendente": 2300.00, "limite_disponivel": 18000.00, "score_credito": 630 },
-  { "nome": "Dilsinho Silva", "status_divida": "Acordo", "valor_pendente": 940.00, "limite_disponivel": 22000.00, "score_credito": 780 },
-  { "nome": "Mumuzinho Batista", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 500.00, "score_credito": 415 },
-  { "nome": "Alexandre Pires", "status_divida": "Atraso", "valor_pendente": 8100.00, "limite_disponivel": 45000.00, "score_credito": 520 },
-  { "nome": "Sorocaba Lima", "status_divida": "Acordo", "valor_pendente": 2800.00, "limite_disponivel": 60000.00, "score_credito": 740 },
-  { "nome": "Fernando Zor", "status_divida": "Negativado", "valor_pendente": 11000.25, "limite_disponivel": 0.00, "score_credito": 290 },
-  { "nome": "Maiara Maraisa", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 80000.00, "score_credito": 710 },
-  { "nome": "Simaria Mendes", "status_divida": "Acordo", "valor_pendente": 6700.00, "limite_disponivel": 120000.00, "score_credito": 640 },
-  { "nome": "Simone Mendes", "status_divida": "Negativado", "valor_pendente": 1200.00, "limite_disponivel": 35000.00, "score_credito": 550 },
-  { "nome": "Naiara Azevedo", "status_divida": "Atraso", "valor_pendente": 5600.00, "limite_disponivel": 25000.00, "score_credito": 615 },
-  { "nome": "Paula Fernandes", "status_divida": "Acordo", "valor_pendente": 150.00, "limite_disponivel": 40000.00, "score_credito": 890 },
-  { "nome": "Michel Teló", "status_divida": "Negativado", "valor_pendente": 3200.00, "limite_disponivel": 12000.00, "score_credito": 480 },
-  { "nome": "Thais Fersoza", "status_divida": "Atraso", "valor_pendente": 920.00, "limite_disponivel": 18000.00, "score_credito": 740 },
-  { "nome": "Grazi Massafera", "status_divida": "Acordo", "valor_pendente": 4500.00, "limite_disponivel": 85000.00, "score_credito": 815 },
-  { "nome": "Rômulo Estrela", "status_divida": "Negativado", "valor_pendente": 2300.00, "limite_disponivel": 0.00, "score_credito": 310 },
-  { "nome": "Chay Suede", "status_divida": "Atraso", "valor_pendente": 1200.00, "limite_disponivel": 15000.00, "score_credito": 660 },
-  { "nome": "Laura Neiva", "status_divida": "Acordo", "valor_pendente": 800.00, "limite_disponivel": 22000.00, "score_credito": 780 },
-  { "nome": "Bruna Linzmeyer", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 0.00, "score_credito": 275 },
-  { "nome": "Johnny Massaro", "status_divida": "Atraso", "valor_pendente": 650.00, "limite_disponivel": 11000.00, "score_credito": 610 },
-  { "nome": "Tatá Werneck", "status_divida": "Acordo", "valor_pendente": 15000.00, "limite_disponivel": 95000.00, "score_credito": 720 },
-  { "nome": "Rafael Vitti", "status_divida": "Negativado", "valor_pendente": 4100.00, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "Ingrid Guimarães", "status_divida": "Atraso", "valor_pendente": 2100.00, "limite_disponivel": 45000.00, "score_credito": 740 },
-  { "nome": "Paulo Gustavo", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 150000.00, "score_credito": 940 },
-  { "nome": "Monica Martelli", "status_divida": "Negativado", "valor_pendente": 8900.00, "limite_disponivel": 500.00, "score_credito": 305 },
-  { "nome": "Preta Gil", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 55000.00, "score_credito": 625 },
-  { "nome": "Carolina Dieckmann", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 40000.00, "score_credito": 880 },
-  { "nome": "Selton Mello", "status_divida": "Negativado", "valor_pendente": 14200.00, "limite_disponivel": 0.00, "score_credito": 195 },
-  { "nome": "Dan Stulbach", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 35000.00, "score_credito": 710 },
-  { "nome": "Caco Ciocler", "status_divida": "Acordo", "valor_pendente": 2300.00, "limite_disponivel": 28000.00, "score_credito": 670 },
-  { "nome": "Maria Fernanda Cândido", "status_divida": "Negativado", "valor_pendente": 5600.00, "limite_disponivel": 5000.00, "score_credito": 410 },
-  { "nome": "Edson Celulari", "status_divida": "Atraso", "valor_pendente": 450.00, "limite_disponivel": 32000.00, "score_credito": 785 },
-  { "nome": "Claudia Raia", "status_divida": "Acordo", "valor_pendente": 12000.00, "limite_disponivel": 85000.00, "score_credito": 730 },
-  { "nome": "Jarbas Homem de Mello", "status_divida": "Negativado", "valor_pendente": 3100.00, "limite_disponivel": 100.00, "score_credito": 340 },
-  { "nome": "Miguel Falabella", "status_divida": "Atraso", "valor_pendente": 6700.00, "limite_disponivel": 45000.00, "score_credito": 540 },
-  { "nome": "Marisa Orth", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 30000.00, "score_credito": 810 },
-  { "nome": "Luiz Fernando Guimarães", "status_divida": "Negativado", "valor_pendente": 9200.00, "limite_disponivel": 0.00, "score_credito": 220 },
-  { "nome": "Fernanda Torres", "status_divida": "Atraso", "valor_pendente": 1200.00, "limite_disponivel": 55000.00, "score_credito": 790 },
-  { "nome": "Andréa Beltrão", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 40000.00, "score_credito": 840 },
-  { "nome": "Marieta Severo", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 10000.00, "score_credito": 490 },
-  { "nome": "Marco Nanini", "status_divida": "Atraso", "valor_pendente": 3400.00, "limite_disponivel": 25000.00, "score_credito": 615 },
-  { "nome": "Guta Stresser", "status_divida": "Acordo", "valor_pendente": 2100.00, "limite_disponivel": 8000.00, "score_credito": 550 },
-  { "nome": "Pedro Cardoso", "status_divida": "Negativado", "valor_pendente": 8900.00, "limite_disponivel": 0.00, "score_credito": 140 },
-  { "nome": "Lázaro Ramos", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 45000.00, "score_credito": 720 },
-  { "nome": "Taís Araújo", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 60000.00, "score_credito": 910 },
-  { "nome": "Fabrício Boliveira", "status_divida": "Negativado", "valor_pendente": 2300.00, "limite_disponivel": 500.00, "score_credito": 380 },
-  { "nome": "Ícaro Silva", "status_divida": "Atraso", "valor_pendente": 1200.00, "limite_disponivel": 12000.00, "score_credito": 630 },
-  { "nome": "Zezé Motta", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 22000.00, "score_credito": 825 },
-  { "nome": "Milton Gonçalves", "status_divida": "Negativado", "valor_pendente": 3100.00, "limite_disponivel": 0.00, "score_credito": 295 },
-  { "nome": "Sheron Menezzes", "status_divida": "Atraso", "valor_pendente": 920.00, "limite_disponivel": 28000.00, "score_credito": 710 },
-  { "nome": "Camila Pitanga", "status_divida": "Acordo", "valor_pendente": 6700.00, "limite_disponivel": 55000.00, "score_credito": 680 },
-  { "nome": "Antônio Pitanga", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 5000.00, "score_credito": 420 },
-  { "nome": "Rocco Pitanga", "status_divida": "Atraso", "valor_pendente": 3200.00, "limite_disponivel": 10000.00, "score_credito": 540 },
-  { "nome": "Cris Vianna", "status_divida": "Acordo", "valor_pendente": 1200.00, "limite_disponivel": 25000.00, "score_credito": 810 },
-  { "nome": "Erika Januza", "status_divida": "Negativado", "valor_pendente": 4100.00, "limite_disponivel": 0.00, "score_credito": 315 },
-  { "nome": "Juliana Alves", "status_divida": "Atraso", "valor_pendente": 900.00, "limite_disponivel": 15000.00, "score_credito": 660 },
-  { "nome": "Lucy Ramos", "status_divida": "Acordo", "valor_pendente": 450.00, "limite_disponivel": 20000.00, "score_credito": 790 },
-  { "nome": "Pathy Dejesus", "status_divida": "Negativado", "valor_pendente": 2300.00, "limite_disponivel": 200.00, "score_credito": 340 },
-  { "nome": "Darlan Cunha", "status_divida": "Atraso", "valor_pendente": 650.00, "limite_disponivel": 5000.00, "score_credito": 510 },
-  { "nome": "Douglas Silva", "status_divida": "Acordo", "valor_pendente": 1500.00, "limite_disponivel": 11000.00, "score_credito": 720 },
-  { "nome": "Roberta Rodrigues", "status_divida": "Negativado", "valor_pendente": 3400.00, "limite_disponivel": 0.00, "score_credito": 280 },
-  { "nome": "Babu Santana", "status_divida": "Atraso", "valor_pendente": 1100.00, "limite_disponivel": 18000.00, "score_credito": 615 },
-  { "nome": "Thelma Assis", "status_divida": "Acordo", "valor_pendente": 500.00, "limite_disponivel": 45000.00, "score_credito": 950 },
-  { "nome": "Gleici Damasceno", "status_divida": "Negativado", "valor_pendente": 1500.00, "limite_disponivel": 1000.00, "score_credito": 450 },
-  { "nome": "Kaysar Dadour", "status_divida": "Atraso", "valor_pendente": 2100.00, "limite_disponivel": 9000.00, "score_credito": 580 }
-];
+        const SITUACAO = [
+            { id: "atraso", diag: "Pagamento pendente identificado no sistema.", script: "Olá, [NOME]! Notamos que o boleto da [EMPRESA] está em aberto. Como podemos ajudar na regularização?" },
+            { id: "acordo", diag: "Solicitação de parcelamento recebida.", script: "Oi [NOME], verificamos seu pedido de acordo para a [EMPRESA]. Seguem as opções de parcelamento." }
         ];
 
-        const btnSortear = document.getElementById('btnSortear');
-        const container = document.getElementById('mainContainer');
-        const resultsArea = document.getElementById('resultsArea');
+        const mainContainer = document.getElementById('mainContainer');
+        const promptInput = document.getElementById('promptInput');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const statusText = document.getElementById('statusText');
+        const iaDiagnostico = document.getElementById('iaDiagnostico');
+        const iaScript = document.getElementById('iaScript');
 
-        function realizarSorteio() {
-            // Sorteia um índice aleatório com base na lista de clientes
-            const indiceSorteado = Math.floor(Math.random() * clients.length);
-            const cliente = clients[indiceSorteado];
-            
-            // Busca a situação financeira correspondente pelo nome
-            const status = situacoes.find(s => s.nome === cliente.nome);
+        btnSubmit.addEventListener('click', async () => {
+            const input = promptInput.value.toLowerCase().trim();
+            if (!input) return;
 
-            exibirResultados(cliente, status);
-        }
+            btnSubmit.disabled = true;
+            statusText.style.opacity = "1";
+            mainContainer.classList.remove('expanded');
 
-        function exibirResultados(cliente, status) {
-            container.classList.add('expanded');
-            
-            let html = `
-                <div class="result-block">
-                    <div class="result-title">👤 Dados do Cliente</div>
-                    <div class="data-row"><span class="data-label">Nome:</span> <span class="data-value">${cliente.nome}</span></div>
-                    <div class="data-row"><span class="data-label">Idade:</span> <span class="data-value">${cliente.idade} anos</span></div>
-                    <div class="data-row"><span class="data-label">CPF:</span> <span class="data-value">${cliente.cpf}</span></div>
-                    <div class="data-row"><span class="data-label">Renda:</span> <span class="data-value">R$ ${cliente.renda.toLocaleString('pt-BR')}</span></div>
-                </div>`;
+            setTimeout(async () => {
+                // Lógica de busca NIA
+                const cliente = CLIENTE.find(c => input.includes(c.nome.toLowerCase()));
+                const situacao = SITUACAO.find(s => input.includes(s.id));
 
-            if (status) {
-                const corStatus = status.status_divida === 'Negativado' ? '#e74c3c' : (status.status_divida === 'Atraso' ? '#f39c12' : '#27ae60');
-                
-                html += `
-                <div class="result-block">
-                    <div class="result-title">📊 Situação Financeira</div>
-                    <div class="data-row"><span class="data-label">Status:</span> <span class="data-value" style="color: ${corStatus}">${status.status_divida}</span></div>
-                    <div class="data-row"><span class="data-label">Dívida Pendente:</span> <span class="data-value" style="color: #e74c3c">R$ ${status.valor_pendente.toLocaleString('pt-BR')}</span></div>
-                    <div class="data-row"><span class="data-label">Score:</span> <span class="data-value">${status.score_credito}</span></div>
-                    <div class="data-row"><span class="data-label">Limite Disponível:</span> <span class="data-value">R$ ${status.limite_disponivel.toLocaleString('pt-BR')}</span></div>
-                </div>`;
-            }
+                let resultadoDiag = "";
+                let resultadoScript = "";
 
-            resultsArea.innerHTML = html;
-        }
+                if (cliente) {
+                    resultadoDiag = `**DADOS DO CLIENTE:** ${cliente.nome} (${cliente.empresa})\n`;
+                    resultadoDiag += situacao ? `**STATUS:** ${situacao.diag}` : "**STATUS:** Nenhuma situação específica detectada.";
+                    
+                    // Personaliza o script com os dados do cliente
+                    resultadoScript = situacao ? 
+                        situacao.script.replace("[NOME]", cliente.nome).replace("[EMPRESA]", cliente.empresa) : 
+                        `Olá ${cliente.nome}, estamos analisando sua conta na ${cliente.empresa}. Em breve daremos um retorno.`;
+                } else {
+                    resultadoDiag = "Nenhum cliente correspondente encontrado no banco de dados.";
+                    resultadoScript = "Por favor, verifique se o nome do cliente está correto.";
+                }
 
-        btnSortear.addEventListener('click', realizarSorteio);
+                iaDiagnostico.innerText = resultadoDiag;
+                iaScript.innerText = resultadoScript;
+                mainContainer.classList.add('expanded');
+
+                // Gravação no Firebase
+                try {
+                    await setDoc(doc(db, "nia_logs", `id_${Date.now()}`), {
+                        input_user: input,
+                        diagnostico: resultadoDiag,
+                        data: serverTimestamp()
+                    });
+                } catch (e) { console.error("Erro Firebase:", e); }
+
+                statusText.style.opacity = "0";
+                btnSubmit.disabled = false;
+            }, 700);
+        });
+
+        document.getElementById('btnCopiar').addEventListener('click', () => {
+            navigator.clipboard.writeText(iaScript.innerText);
+            const b = document.getElementById('btnCopiar');
+            b.innerText = "Copiado!";
+            setTimeout(() => b.innerText = "Copiar", 2000);
+        });
     </script>
 </body>
 </html>
