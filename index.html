@@ -6,7 +6,7 @@
     <title>THE SIX - Assistente B2B AI</title>
     <style>
         /* =========================================
-           ESTÉTICA ORIGINAL MANTIDA (LIQUID GLASS)
+           ESTÉTICA ORIGINAL (LIQUID GLASS)
            ========================================= */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
@@ -22,6 +22,7 @@
         .action-bar { display: flex; justify-content: space-between; align-items: center; }
         .status-text { font-size: 13px; color: #3498db; font-weight: 500; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
         .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; }
+        .btn-submit:disabled { background: #95a5a6; cursor: not-allowed; }
         .results-area { max-height: 0; opacity: 0; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); background: rgba(255, 255, 255, 0.85); border-top: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
         .result-block { margin-bottom: 24px; opacity: 0; transform: translateY(10px); }
         .smart-container.expanded .result-block { animation: fadeIn 0.5s ease forwards; }
@@ -47,7 +48,7 @@
         <div class="prompt-area">
             <div class="header-title">
                 <span id="userGreeting">Como posso ajudar na cobrança?</span>
-                <span class="ai-badge">✦ Gemini 3 Flash + Local Engine</span>
+                <span class="ai-badge">✦ Gemini 1.5 Flash + Local Engine</span>
             </div>
             
             <textarea id="promptInput" placeholder="Descreva a situação ou digite uma dúvida..."></textarea>
@@ -86,10 +87,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        // IMPORTAÇÃO DA NOVA BIBLIOTECA ATUALIZADA
         import { GoogleGenAI } from "https://esm.run/@google/genai";
 
-        // CONFIGURAÇÃO FIREBASE (MANTIDA)
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBZoZMwAzYpban5PnkeHIQhz3Si4sTJm9E",
             authDomain: "nova-96b06.firebaseapp.com",
@@ -103,27 +103,17 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // INICIALIZAÇÃO COM O NOVO SDK GEMINI 3
+        // INICIALIZAÇÃO GEMINI
         const apiKey = "AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk";
-        const ai = new GoogleGenAI({ apiKey });
+        const genAI = new GoogleGenAI(apiKey);
 
-        // =========================================
-        // ALGORITMO DE RESPOSTAS LOCAIS (MANTIDO)
-        // =========================================
+        // ALGORITMO LOCAL
         const localKnowledge = [
             { key: ["atraso", "vencido", "pagou"], diag: "Cliente com pendência financeira padrão.", script: "Olá, notamos que o boleto X venceu. Podemos ajudar com uma nova linha digitável?" },
             { key: ["esqueci", "esquecimento"], diag: "Inadimplência não intencional.", script: "Compreendemos a correria! Segue o link para regularização do débito em aberto." },
             { key: ["desconto", "juros", "reduzir"], diag: "Negociação de valores solicitada.", script: "Podemos avaliar uma isenção de juros para pagamento nas próximas 24 horas. O que acha?" },
             { key: ["parcelar", "dividir"], diag: "Necessidade de flexibilização de fluxo.", script: "Temos a opção de parcelamento em até 3x sem juros no cartão ou boleto." }
         ];
-
-        for(let i=0; i<196; i++) {
-            localKnowledge.push({
-                key: [`opção${i}`, `duvida${i}`],
-                diag: `Diagnóstico automatizado para cenário tipo ${i}.`,
-                script: `Script de suporte B2B especializado número ${i}: Por favor, verifique os detalhes financeiros no portal.`
-            });
-        }
 
         const findLocalResponse = (text) => {
             const lowerText = text.toLowerCase();
@@ -139,7 +129,7 @@
         const iaDiagnostico = document.getElementById('iaDiagnostico');
         const iaScript = document.getElementById('iaScript');
 
-        // AUTH LOGIC
+        // AUTH
         document.getElementById('btnGoogle').addEventListener('click', async () => {
             try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); }
         });
@@ -152,47 +142,48 @@
             }
         });
 
-        // LOGIC PRINCIPAL ATUALIZADA PARA O NOVO SDK
+        // LOGICA DE PROCESSAMENTO
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
 
+            // UI Feedback
             btnSubmit.disabled = true;
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            const localMatch = findLocalResponse(promptValue);
-
             try {
                 let diagResult, scriptResult;
+                const localMatch = findLocalResponse(promptValue);
 
                 if (localMatch) {
                     diagResult = "[ENGINE LOCAL] " + localMatch.diag;
                     scriptResult = localMatch.script;
                 } else {
-                    // USO DO NOVO MÉTODO E MODELO GEMINI 3 FLASH PREVIEW
-                    const response = await ai.models.generateContent({
-                        model: "gemini-3-flash-preview",
-                        contents: promptValue,
-                        config: {
-                            systemInstruction: "Você é um assistente B2B especialista em cobrança. Forneça um diagnóstico curto e um script profissional separados por '---'.", //
-                            temperature: 1.0 // Recomendado para Gemini 3
-                        }
+                    // CONFIGURAÇÃO DO MODELO
+                    const model = genAI.getGenerativeModel({ 
+                        model: "gemini-1.5-flash",
+                        systemInstruction: "Você é um assistente B2B especialista em cobrança. Analise a situação do cliente e forneça um diagnóstico curto e um script profissional de abordagem. Separe o diagnóstico do script usando obrigatoriamente três hifens '---'."
                     });
-                    
-                    const responseText = response.text; //
+
+                    const result = await model.generateContent(promptValue);
+                    const response = await result.response;
+                    const responseText = response.text();
 
                     if (responseText.includes('---')) {
                         [diagResult, scriptResult] = responseText.split('---');
                     } else {
-                        diagResult = "Análise inteligente concluída.";
+                        diagResult = "Análise concluída com sucesso.";
                         scriptResult = responseText;
                     }
                 }
 
+                // Update UI
                 iaDiagnostico.innerText = diagResult.trim();
                 iaScript.innerText = scriptResult.trim();
+                mainContainer.classList.add('expanded');
 
+                // Database Log
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
                         uid: auth.currentUser.uid,
@@ -202,17 +193,16 @@
                     });
                 }
 
-                mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error("Erro na API Gemini 3:", error);
-                alert("Houve um erro na comunicação com a IA. Tente novamente.");
+                console.error("Erro Gemini:", error);
+                alert("Erro ao processar: " + error.message);
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
         });
 
-        // UTILITÁRIOS
+        // COPY
         document.getElementById('btnCopiar').addEventListener('click', () => {
             navigator.clipboard.writeText(iaScript.innerText);
             document.getElementById('btnCopiar').innerText = "Copiado!";
