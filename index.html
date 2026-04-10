@@ -56,12 +56,12 @@
                 <span class="ai-badge">✦ THE SIX CORE</span>
             </div>
             
-            <textarea id="promptInput" placeholder="Digite o nome do cliente ou a situação..."></textarea>
+            <textarea id="promptInput" placeholder="Ex: Fale com o João Silva sobre o atraso..."></textarea>
             
             <div class="action-bar">
                 <div class="status-text" id="statusText">
                     <div class="spinner"></div>
-                    Cruzando dados JSON de cadastro e situação...
+                    Analisando arquivos JSON e Gerando Resposta...
                 </div>
                 
                 <button id="btnSubmit" class="btn-submit">
@@ -91,7 +91,9 @@
     <script type="module">
         import { GoogleGenAI } from "https://esm.run/@google/genai";
         
-        const genAI = new GoogleGenAI("AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk");
+        // CHAVE DE API CONFIGURADA DIRETAMENTE NA INSTÂNCIA
+        const API_KEY = "AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk";
+        const genAI = new GoogleGenAI(API_KEY);
 
         const mainContainer = document.getElementById('mainContainer');
         const promptInput = document.getElementById('promptInput');
@@ -103,31 +105,31 @@
         // Função para carregar e buscar nos arquivos JSON
         async function getContextFromJSON(userInput) {
             try {
-                // Busca os arquivos JSON no repositório
-                const [resClientes, resSituacao] = await Promise.all([
-                    fetch('./clientes.json'),
-                    fetch('./situacao.json')
-                ]);
+                // Fetch dos arquivos JSON (devem estar na mesma pasta do index.html)
+                const resClientes = await fetch('./clientes.json');
+                const resSituacao = await fetch('./situacao.json');
+
+                if (!resClientes.ok || !resSituacao.ok) throw new Error("Arquivos JSON não encontrados");
 
                 const clientes = await resClientes.json();
                 const situacoes = await resSituacao.json();
 
                 const inputLower = userInput.toLowerCase();
 
-                // Procura o cliente pelo nome nos dois arquivos
+                // Busca por correspondência de nome
                 const clienteData = clientes.find(c => inputLower.includes(c.nome.toLowerCase()));
                 const situacaoData = situacoes.find(s => inputLower.includes(s.nome.toLowerCase()));
 
                 if (!clienteData && !situacaoData) return "";
 
                 return `
-                [DADOS EXTRAÍDOS DO SISTEMA]
-                CADASTRO: ${clienteData ? `Nome: ${clienteData.nome}, Renda: R$${clienteData.renda}, Civil: ${clienteData.estado_civil}` : "Não encontrado"}
-                FINANCEIRO: ${situacaoData ? `Status: ${situacaoData.status_divida}, Dívida: R$${situacaoData.valor_pendente}, Score: ${situacaoData.score_credito}` : "Não encontrado"}
-                --- 
-                `;
+[DADOS DO CLIENTE LOCALIZADOS NO SISTEMA]
+CADASTRO: ${clienteData ? `Nome: ${clienteData.nome}, Renda: R$${clienteData.renda}, Civil: ${clienteData.estado_civil}` : "Dados cadastrais não vinculados."}
+FINANCEIRO: ${situacaoData ? `Status: ${situacaoData.status_divida}, Pendente: R$${situacaoData.valor_pendente}, Score: ${situacaoData.score_credito}` : "Dados financeiros não vinculados."}
+--- 
+`;
             } catch (e) {
-                console.error("Erro ao ler arquivos JSON:", e);
+                console.warn("Aviso: Não foi possível carregar os dados locais.", e);
                 return "";
             }
         }
@@ -140,35 +142,37 @@
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            // 1. Busca contexto nos JSONs
+            // 1. Coleta contexto dos arquivos locais
             const context = await getContextFromJSON(promptValue);
 
             try {
+                // 2. Configura o modelo
                 const model = genAI.getGenerativeModel({ 
                     model: "gemini-1.5-flash",
-                    systemInstruction: "Você é um especialista em cobrança B2B. Analise os dados do cliente (Cadastro e Financeiro) e o pedido do usuário. Forneça um diagnóstico de risco e um script de cobrança humano e eficaz. Separe os dois com '---'." 
+                    systemInstruction: "Você é um especialista em cobrança e análise de crédito. Use os dados fornecidos para criar uma estratégia personalizada. Responda em duas partes: um diagnóstico de risco e um script de conversa amigável mas firme. Separe os dois com '---'." 
                 });
 
-                // 2. Envia Contexto + Mensagem do Usuário
+                // 3. Executa a geração
                 const result = await model.generateContent(context + promptValue);
-                const responseText = (await result.response).text();
+                const response = await result.response;
+                const responseText = response.text();
 
-                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Análise concluída.", responseText];
+                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Diagnóstico concluído.", responseText];
 
                 iaDiagnostico.innerText = diag.trim();
                 iaScript.innerText = script.trim();
                 mainContainer.classList.add('expanded');
 
             } catch (error) {
-                console.error(error);
-                alert("Erro ao processar inteligência.");
+                console.error("Erro na API:", error);
+                alert("Erro ao processar sua solicitação. Verifique sua chave de API.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
         });
 
-        // Copiar Script
+        // Botão de Copiar
         document.getElementById('btnCopiar').addEventListener('click', () => {
             navigator.clipboard.writeText(iaScript.innerText);
             const btn = document.getElementById('btnCopiar');
