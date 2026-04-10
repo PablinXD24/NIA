@@ -61,7 +61,7 @@
             <div class="action-bar">
                 <div class="status-text" id="statusText">
                     <div class="spinner"></div>
-                    Cruzando dados de cadastro e situação financeira...
+                    Cruzando dados JSON de cadastro e situação...
                 </div>
                 
                 <button id="btnSubmit" class="btn-submit">
@@ -91,10 +91,6 @@
     <script type="module">
         import { GoogleGenAI } from "https://esm.run/@google/genai";
         
-        // Importação dos dois arquivos do repositório
-        import { clients } from "clientes.js"; 
-        import { situacao } from "situacao.js";
-
         const genAI = new GoogleGenAI("AIzaSyAxqKJnt0UqwvgpANYD3G_tHICCD26d_nk");
 
         const mainContainer = document.getElementById('mainContainer');
@@ -104,24 +100,37 @@
         const iaDiagnostico = document.getElementById('iaDiagnostico');
         const iaScript = document.getElementById('iaScript');
 
-        // Função de busca inteligente em ambos os arquivos
-        const getFullClientContext = (text) => {
-            const input = text.toLowerCase();
-            
-            // Procura o cadastro
-            const cadastro = clients.find(c => input.includes(c.nome.toLowerCase()));
-            // Procura a situação financeira
-            const financeiro = situacao.find(s => input.includes(s.nome.toLowerCase()));
+        // Função para carregar e buscar nos arquivos JSON
+        async function getContextFromJSON(userInput) {
+            try {
+                // Busca os arquivos JSON no repositório
+                const [resClientes, resSituacao] = await Promise.all([
+                    fetch('./clientes.json'),
+                    fetch('./situacao.json')
+                ]);
 
-            if (!cadastro && !financeiro) return "";
+                const clientes = await resClientes.json();
+                const situacoes = await resSituacao.json();
 
-            return `
-            [DADOS DO CLIENTE IDENTIFICADO]
-            CADASTRO: ${cadastro ? `Nome: ${cadastro.nome}, Renda: ${cadastro.renda}, Est. Civil: ${cadastro.estado_civil}` : "Não localizado"}
-            SITUAÇÃO ATUAL: ${financeiro ? `Status: ${financeiro.status_divida}, Pendente: R$${financeiro.valor_pendente}, Score: ${financeiro.score_credito}, Limite: ${financeiro.limite_disponivel}` : "Não localizada"}
-            --- 
-            `;
-        };
+                const inputLower = userInput.toLowerCase();
+
+                // Procura o cliente pelo nome nos dois arquivos
+                const clienteData = clientes.find(c => inputLower.includes(c.nome.toLowerCase()));
+                const situacaoData = situacoes.find(s => inputLower.includes(s.nome.toLowerCase()));
+
+                if (!clienteData && !situacaoData) return "";
+
+                return `
+                [DADOS EXTRAÍDOS DO SISTEMA]
+                CADASTRO: ${clienteData ? `Nome: ${clienteData.nome}, Renda: R$${clienteData.renda}, Civil: ${clienteData.estado_civil}` : "Não encontrado"}
+                FINANCEIRO: ${situacaoData ? `Status: ${situacaoData.status_divida}, Dívida: R$${situacaoData.valor_pendente}, Score: ${situacaoData.score_credito}` : "Não encontrado"}
+                --- 
+                `;
+            } catch (e) {
+                console.error("Erro ao ler arquivos JSON:", e);
+                return "";
+            }
+        }
 
         btnSubmit.addEventListener('click', async () => {
             const promptValue = promptInput.value.trim();
@@ -131,18 +140,20 @@
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            const context = getFullClientContext(promptValue);
+            // 1. Busca contexto nos JSONs
+            const context = await getContextFromJSON(promptValue);
 
             try {
                 const model = genAI.getGenerativeModel({ 
                     model: "gemini-1.5-flash",
-                    systemInstruction: "Você é um assistente B2B especializado em recuperação de crédito. Use os dados de CADASTRO e SITUAÇÃO fornecidos para criar uma estratégia personalizada. Se o score for baixo, seja mais firme. Se houver limite disponível, sugira parcelamento. Separe Diagnóstico de Script com '---'." 
+                    systemInstruction: "Você é um especialista em cobrança B2B. Analise os dados do cliente (Cadastro e Financeiro) e o pedido do usuário. Forneça um diagnóstico de risco e um script de cobrança humano e eficaz. Separe os dois com '---'." 
                 });
 
+                // 2. Envia Contexto + Mensagem do Usuário
                 const result = await model.generateContent(context + promptValue);
                 const responseText = (await result.response).text();
 
-                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Análise processada.", responseText];
+                let [diag, script] = responseText.includes('---') ? responseText.split('---') : ["Análise concluída.", responseText];
 
                 iaDiagnostico.innerText = diag.trim();
                 iaScript.innerText = script.trim();
@@ -150,13 +161,14 @@
 
             } catch (error) {
                 console.error(error);
-                alert("Erro ao conectar com a IA.");
+                alert("Erro ao processar inteligência.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
         });
 
+        // Copiar Script
         document.getElementById('btnCopiar').addEventListener('click', () => {
             navigator.clipboard.writeText(iaScript.innerText);
             const btn = document.getElementById('btnCopiar');
@@ -164,6 +176,7 @@
             setTimeout(() => btn.innerText = "Copiar", 2000);
         });
 
+        // Atalho Enter
         promptInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
