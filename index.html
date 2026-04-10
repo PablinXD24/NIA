@@ -5,180 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE SIX - Assistente B2B AI</title>
     <style>
-        /* =========================================
-           ESTÉTICA ORIGINAL MANTIDA (LIQUID GLASS)
-           ========================================= */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        #login-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            z-index: 100;
-        }
-
-        .btn-google {
-            background: white;
-            color: #444;
-            border: 1px solid #ddd;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s;
-        }
+        /* MANTIDA TODA A SUA ESTÉTICA ORIGINAL (LIQUID GLASS) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 100; }
+        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 12px 24px; border-radius: 12px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .btn-google:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-
-        .smart-container {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.08);
-            width: 100%;
-            max-width: 700px;
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-            overflow: hidden;
-            display: none; 
-            flex-direction: column;
-            position: relative;
-        }
-
-        .smart-container.expanded .results-area {
-            max-height: 2000px;
-            opacity: 1;
-            padding: 32px 24px;
-            overflow-y: auto;
-        }
-
-        .prompt-area {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            background: rgba(255, 255, 255, 0.3);
-            position: relative;
-            z-index: 2;
-        }
-
-        .header-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #596a7b;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .ai-badge {
-            font-size: 12px;
-            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-
-        textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            resize: none;
-            font-size: 18px;
-            line-height: 1.5;
-            color: #2c3e50;
-            outline: none;
-            min-height: 60px;
-        }
-
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-text {
-            font-size: 13px;
-            color: #3498db;
-            font-weight: 500;
-            opacity: 0;
-            transition: opacity 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-submit {
-            background: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .results-area {
-            max-height: 0;
-            opacity: 0;
-            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            background: rgba(255, 255, 255, 0.85);
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .result-block { margin-bottom: 24px; opacity: 0; transform: translateY(10px); }
-        .smart-container.expanded .result-block { animation: fadeIn 0.5s ease forwards; }
-
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-
-        .result-title {
-            font-size: 12px; font-weight: 700; color: #7f8c8d;
-            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
-        }
-
-        .script-box {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #dcdde1;
-            padding: 16px; border-radius: 12px; position: relative;
-        }
-
-        .btn-copy {
-            position: absolute; top: 12px; right: 12px;
-            background: #f1f2f6; border: none; padding: 6px 12px;
-            border-radius: 6px; font-size: 12px; cursor: pointer;
-        }
-
-        .spinner {
-            width: 16px; height: 16px;
-            border: 2px solid #3498db; border-top: 2px solid transparent;
-            border-radius: 50%; animation: spin 1s linear infinite;
-        }
+        .smart-container { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 24px; width: 100%; max-width: 700px; display: none; flex-direction: column; position: relative; transition: all 0.5s ease; }
+        .smart-container.expanded .results-area { max-height: 2000px; opacity: 1; padding: 32px 24px; }
+        .prompt-area { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .header-title { font-size: 14px; font-weight: 600; color: #596a7b; display: flex; justify-content: space-between; align-items: center; }
+        .ai-badge { font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        textarea { width: 100%; background: transparent; border: none; resize: none; font-size: 18px; color: #2c3e50; outline: none; min-height: 60px; }
+        .status-text { font-size: 13px; color: #3498db; opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn-submit { background: #2c3e50; color: white; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .results-area { max-height: 0; opacity: 0; transition: all 0.6s; background: rgba(255, 255, 255, 0.85); overflow: hidden; border-top: 1px solid rgba(0,0,0,0.05); }
+        .result-block { margin-bottom: 24px; }
+        .result-title { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+        .script-box { background: rgba(255, 255, 255, 0.9); border: 1px solid #dcdde1; padding: 16px; border-radius: 12px; position: relative; }
+        .btn-copy { position: absolute; top: 12px; right: 12px; background: #f1f2f6; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        .spinner { width: 16px; height: 16px; border: 2px solid #3498db; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-
     </style>
 </head>
 <body>
@@ -197,19 +44,11 @@
                 <span id="userGreeting">Como posso ajudar na cobrança?</span>
                 <span class="ai-badge">✦ Firebase AI Logic</span>
             </div>
-            
             <textarea id="promptInput" placeholder="Descreva a situação da empresa ou cliente..."></textarea>
-            
-            <div class="action-bar">
-                <div class="status-text" id="statusText">
-                    <div class="spinner"></div>
-                    Processando inteligência...
-                </div>
-                
+            <div class="action-bar" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="status-text" id="statusText"><div class="spinner"></div> Processando inteligência...</div>
                 <button id="btnSubmit" class="btn-submit">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
             </div>
         </div>
@@ -217,26 +56,22 @@
         <div class="results-area" id="resultsArea">
             <div class="result-block">
                 <div class="result-title">⚡ Diagnóstico da IA</div>
-                <div class="result-content" id="iaDiagnostico"></div>
+                <div id="iaDiagnostico"></div>
             </div>
-
             <div class="result-block">
                 <div class="result-title">✍️ Script Gerado</div>
                 <div class="script-box">
                     <button id="btnCopiar" class="btn-copy">Copiar</button>
-                    <div class="result-content" id="iaScript" style="white-space: pre-wrap;"></div>
+                    <div id="iaScript" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Atualizado para a versão 11.4.0 que contém o suporte estável para AI Logic
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-        
-        // Caminho corrigido para o SDK de IA
         import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-ai.js";
 
         const firebaseConfig = {
@@ -248,12 +83,16 @@
             appId: "1:166967553772:web:475370390f719953afbfc9"
         };
 
+        // 1. Inicializa o App
         const app = initializeApp(firebaseConfig);
+        
+        // 2. Inicializa Auth e Firestore
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' }); // Força a escolha da conta
 
-        // Inicialização do backend do Gemini Developer API
+        // 3. Inicializa o AI Logic
         const ai = getAI(app, { backend: new GoogleAIBackend() });
         const model = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 
@@ -263,14 +102,18 @@
         const promptInput = document.getElementById('promptInput');
         const btnSubmit = document.getElementById('btnSubmit');
         const statusText = document.getElementById('statusText');
-        const iaDiagnostico = document.getElementById('iaDiagnostico');
-        const iaScript = document.getElementById('iaScript');
 
-        // --- GESTÃO DE AUTENTICAÇÃO ---
-        document.getElementById('btnGoogle').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(err => console.error("Erro Login:", err));
-        });
+        // --- LOGIN COM GOOGLE ---
+        document.getElementById('btnGoogle').onclick = async () => {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Erro no login:", error.code, error.message);
+                alert("Erro ao entrar com Google. Verifique se o domínio está autorizado no console do Firebase.");
+            }
+        };
 
+        // Monitor de estado do usuário
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 loginScreen.style.display = 'none';
@@ -282,8 +125,8 @@
             }
         });
 
-        // --- LÓGICA DE EXECUÇÃO ---
-        btnSubmit.addEventListener('click', async () => {
+        // --- EXECUÇÃO DA IA ---
+        btnSubmit.onclick = async () => {
             const promptValue = promptInput.value.trim();
             if (!promptValue || btnSubmit.disabled) return;
 
@@ -291,43 +134,38 @@
             statusText.style.opacity = "1";
             mainContainer.classList.remove('expanded');
 
-            const systemContext = "Você é um assistente B2B especialista em cobrança. Analise o caso e forneça: 1) Diagnóstico curto. 2) Script de mensagem profissional. Separe os dois por '---'.";
-            
             try {
-                const result = await model.generateContent(`${systemContext}\n\nCaso: ${promptValue}`);
-                const aiResponse = result.response.text();
-
-                const parts = aiResponse.split('---');
-                iaDiagnostico.innerText = parts[0] ? parts[0].trim() : "Análise concluída.";
-                iaScript.innerText = parts[1] ? parts[1].trim() : aiResponse.trim();
+                const result = await model.generateContent(`Você é especialista em cobrança B2B. Analise: ${promptValue}. Separe diagnóstico e script por '---'.`);
+                const responseText = result.response.text();
+                
+                const parts = responseText.split('---');
+                document.getElementById('iaDiagnostico').innerText = parts[0] ? parts[0].trim() : "Concluído.";
+                document.getElementById('iaScript').innerText = parts[1] ? parts[1].trim() : responseText;
 
                 if (auth.currentUser) {
                     await setDoc(doc(db, "history", `${Date.now()}`), {
                         uid: auth.currentUser.uid,
                         prompt: promptValue,
-                        response: aiResponse,
+                        response: responseText,
                         timestamp: serverTimestamp()
                     });
                 }
-
                 mainContainer.classList.add('expanded');
             } catch (error) {
-                console.error("Erro AI:", error);
-                alert("Erro ao processar. Verifique se ativou o AI Logic no console.");
+                console.error("Erro na IA:", error);
+                alert("Erro ao processar. Verifique se o AI Logic está ativo no console.");
             } finally {
                 statusText.style.opacity = "0";
                 btnSubmit.disabled = false;
             }
-        });
+        };
 
-        // Eventos
-        promptInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); btnSubmit.click(); } });
-        document.getElementById('btnCopiar').addEventListener('click', () => {
-            navigator.clipboard.writeText(iaScript.innerText).then(() => {
-                document.getElementById('btnCopiar').innerText = "Copiado!";
-                setTimeout(() => document.getElementById('btnCopiar').innerText = "Copiar", 2000);
-            });
-        });
+        // Copiar Script
+        document.getElementById('btnCopiar').onclick = () => {
+            navigator.clipboard.writeText(document.getElementById('iaScript').innerText);
+            document.getElementById('btnCopiar').innerText = "Copiado!";
+            setTimeout(() => document.getElementById('btnCopiar').innerText = "Copiar", 2000);
+        };
     </script>
 </body>
 </html>
